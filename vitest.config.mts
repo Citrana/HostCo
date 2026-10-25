@@ -22,6 +22,9 @@ export default defineConfig({
           include: ["**/*.test.{ts,tsx}"],
           exclude: ["node_modules/**", "convex/**", "e2e/**"],
           setupFiles: ["./vitest.setup.ts"],
+          // next-intl imports `next/server` without an extension, which only
+          // resolves when Vite processes it.
+          server: { deps: { inline: ["next-intl"] } },
         },
       },
       {
