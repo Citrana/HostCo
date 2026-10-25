@@ -1,22 +1,22 @@
 import { useTranslations } from "next-intl";
 
-const linkClass = "font-medium text-zinc-950 dark:text-zinc-50";
+const linkClass = "font-medium text-primary underline-offset-2 hover:underline";
 
 export function HomeHero() {
   const t = useTranslations("HomePage");
 
   return (
     <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-      <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
+      <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-ink">
         {t.rich("title", {
           code: (chunks) => (
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
+            <code className="rounded bg-canvas px-1.5 py-0.5 font-mono text-[0.9em]">
               {chunks}
             </code>
           ),
         })}
       </h1>
-      <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
+      <p className="max-w-md text-lg leading-8 text-muted">
         {t.rich("intro", {
           templates: (chunks) => (
             <a
