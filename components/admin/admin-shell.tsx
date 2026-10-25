@@ -43,9 +43,12 @@ export function AdminShell({ children }: { children: ReactNode }) {
   // Signed in, but the account is disabled or gone: end the session too.
   const inactive = me === null;
   const mustChange = me?.mustChangePassword === true;
+  const leaving = useRef(false);
   useEffect(() => {
     if (signedOut) router.replace("/sign-in");
     else if (inactive) {
+      if (leaving.current) return;
+      leaving.current = true;
       // Leave either way; a failed sign-out only leaves a dead cookie behind.
       void auth
         .signOut()
@@ -127,12 +130,25 @@ function AccountMenu({ me }: { me: AdminMe }) {
   const auth = useAuthClient();
   const openPage = useOpenPage();
   const menuId = useId();
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const [signOutFailed, setSignOutFailed] = useState(false);
 
   // A menu left open shouldn't come back when Next shows this page again.
   useLayoutEffect(() => () => setOpen(false), []);
+
+  // Any click outside closes it, including on a nav link: the menu lives in the
+  // layout, so it would otherwise stay open on the next page.
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(event: PointerEvent) {
+      if (!wrapperRef.current?.contains(event.target as Node)) setOpen(false);
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [open]);
 
   function close() {
     setOpen(false);
@@ -140,11 +156,14 @@ function AccountMenu({ me }: { me: AdminMe }) {
   }
 
   async function signOut() {
+    if (signingOut) return;
+    setSigningOut(true);
     setSignOutFailed(false);
     try {
       await auth.signOut();
     } catch {
       setSignOutFailed(true);
+      setSigningOut(false);
       return;
     }
     // A full load, so no route Next keeps hidden survives with this user's state.
@@ -153,6 +172,7 @@ function AccountMenu({ me }: { me: AdminMe }) {
 
   return (
     <div
+      ref={wrapperRef}
       className="relative"
       onKeyDown={(event) => {
         if (event.key === "Escape" && open) close();
@@ -162,7 +182,7 @@ function AccountMenu({ me }: { me: AdminMe }) {
         ref={toggleRef}
         type="button"
         aria-expanded={open}
-        aria-controls={menuId}
+        aria-controls={open ? menuId : undefined}
         onClick={() => setOpen((value) => !value)}
         className="flex items-center gap-3 rounded-full py-1 pl-1 pr-3 text-left hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
@@ -183,7 +203,12 @@ function AccountMenu({ me }: { me: AdminMe }) {
         >
           <p className="break-all text-sm text-muted">{me.email}</p>
           <FormError message={signOutFailed ? tErrors("UNKNOWN") : null} />
-          <button type="button" onClick={signOut} className={buttonStyles.secondary}>
+          <button
+            type="button"
+            onClick={signOut}
+            aria-disabled={signingOut || undefined}
+            className={buttonStyles.secondary}
+          >
             {t("signOut")}
           </button>
         </div>

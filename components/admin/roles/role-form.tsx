@@ -11,13 +11,13 @@ import { toErrorCode, type ClientErrorCode } from "@/lib/auth/errors";
 import { useLocaleKey } from "@/lib/i18n/use-locale-key";
 import { focusFirstInvalid, FormError, SubmitButton, TextField } from "../../auth/form-parts";
 import { can, useAdminMe } from "../admin-session";
-import { BackLink, buttonStyles, Loading, NoAccess, PageHeader, Panel, StatusMessage } from "../ui";
+import {
+  BackLink,
+  buttonStyles,
+  focusOnMount,
+  Loading, NoAccess, PageHeader, Panel, StatusMessage } from "../ui";
 
 const GROUPS = ["property", "user", "role", "location"] as const;
-
-function groupOf(permission: Permission) {
-  return permission.split(".")[0] as (typeof GROUPS)[number];
-}
 
 /** Creates a role (no `id`) or edits the role with that id. */
 export function RoleForm({ id }: { id?: string }) {
@@ -76,12 +76,16 @@ function RoleEditor({ role }: { role: Doc<"roles"> | null }) {
   const [saved, setSaved] = useState(false);
   const [pending, setPending] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  // Set when "Cancel" hides the confirmation, so focus returns to the button.
+  // Set when the confirmation closes, so focus returns to the button.
   const refocusDelete = useRef(false);
 
   const locked = role?.isSystem === true;
   const ownRole = role !== null && role._id === me.roleId;
-  const readOnly = locked || ownRole;
+  // The server refuses to touch a role that grants more than the admin holds.
+  const aboveLevel =
+    role !== null && !locked && !role.permissions.every((permission) => can(me, permission));
+  const readOnly = locked || ownRole || aboveLevel;
+  const readOnlyReason = locked ? "locked" : ownRole ? "ownRole" : "aboveLevel";
 
   function toggle(permission: Permission, checked: boolean) {
     setPermissions((current) =>
@@ -113,6 +117,11 @@ function RoleEditor({ role }: { role: Doc<"roles"> | null }) {
     try {
       if (role === null) {
         await createRole({ name, permissions });
+        // Next keeps this page alive, so it must be ready for the next role.
+        setNameFr("");
+        setNameEn("");
+        setPermissions([]);
+        setPending(false);
         router.replace("/admin/roles");
         return;
       }
@@ -131,11 +140,11 @@ function RoleEditor({ role }: { role: Doc<"roles"> | null }) {
     try {
       await removeRole({ id: role._id });
       router.replace("/admin/roles");
-      return;
     } catch (caught) {
       setError(toErrorCode(caught));
-      setConfirmingDelete(false);
+      refocusDelete.current = true;
     }
+    setConfirmingDelete(false);
     setPending(false);
   }
 
@@ -143,7 +152,7 @@ function RoleEditor({ role }: { role: Doc<"roles"> | null }) {
     <Panel className="max-w-3xl">
       {readOnly && (
         <p className="mb-6 rounded-field bg-primary-soft px-4 py-3 text-base text-primary">
-          {locked ? t("RoleForm.locked") : t("RoleForm.ownRole")}
+          {t(`RoleForm.${readOnlyReason}`)}
         </p>
       )}
       <form noValidate onSubmit={onSubmit} className="flex flex-col gap-6">
@@ -184,7 +193,7 @@ function RoleEditor({ role }: { role: Doc<"roles"> | null }) {
                 <legend className="px-1 text-base font-medium text-ink">
                   {t(`PermissionGroups.${group}`)}
                 </legend>
-                {PERMISSIONS.filter((permission) => groupOf(permission) === group).map(
+                {PERMISSIONS.filter((permission) => permission.startsWith(`${group}.`)).map(
                   (permission) => {
                     // Only what the admin holds can be granted (checked on the server too).
                     const disabled = readOnly || !can(me, permission);
@@ -229,6 +238,7 @@ function RoleEditor({ role }: { role: Doc<"roles"> | null }) {
                     {t("RoleForm.deleteConfirm")}
                   </button>
                   <button
+                    ref={focusOnMount}
                     type="button"
                     onClick={() => {
                       refocusDelete.current = true;

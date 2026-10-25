@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ConvexError } from "convex/values";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -73,6 +73,22 @@ describe.each(LOCALES)("RoleForm (%s)", (locale, messages) => {
         permissions: ["property.create", "user.view"],
       });
       expect(navigation.replace).toHaveBeenCalledWith("/admin/roles");
+    });
+
+    // With Cache Components the page stays alive, so "New role" comes back to it.
+    it("starts fresh and usable after creating a role", async () => {
+      renderAdmin(<RoleForm />, { locale });
+
+      await fillNames("Rédacteur", "Writer");
+      await userEvent.click(screen.getByRole("checkbox", { name: p.property.create }));
+      await userEvent.click(screen.getByRole("button", { name: t.RoleForm.create }));
+
+      await waitFor(() => expect(navigation.replace).toHaveBeenCalled());
+      expect(screen.getByLabelText(t.RoleForm.nameFr)).toHaveValue("");
+      expect(screen.getByRole("checkbox", { name: p.property.create })).not.toBeChecked();
+      expect(screen.getByRole("button", { name: t.RoleForm.create })).not.toHaveAttribute(
+        "aria-disabled",
+      );
     });
 
     it("groups the permissions by area", () => {
@@ -154,13 +170,34 @@ describe.each(LOCALES)("RoleForm (%s)", (locale, messages) => {
       expect(navigation.replace).not.toHaveBeenCalled();
     });
 
-    it("can cancel the deletion", async () => {
+    it("moves focus to Cancel when asking to confirm, and back when cancelled", async () => {
       renderAdmin(<RoleForm id="roles_mod" />, { locale });
 
       await userEvent.click(screen.getByRole("button", { name: t.RoleForm.delete }));
+      expect(screen.getByRole("button", { name: t.RoleForm.cancel })).toHaveFocus();
       await userEvent.click(screen.getByRole("button", { name: t.RoleForm.cancel }));
 
       expect(screen.getByRole("button", { name: t.RoleForm.delete })).toHaveFocus();
+    });
+
+    it("returns focus to Delete when the deletion fails", async () => {
+      mutations.get("roles:remove").mockRejectedValue(new ConvexError({ code: "ROLE_IN_USE" }));
+      renderAdmin(<RoleForm id="roles_mod" />, { locale });
+
+      await userEvent.click(screen.getByRole("button", { name: t.RoleForm.delete }));
+      await userEvent.click(screen.getByRole("button", { name: t.RoleForm.deleteConfirm }));
+
+      await screen.findByRole("alert");
+      expect(screen.getByRole("button", { name: t.RoleForm.delete })).toHaveFocus();
+    });
+
+    // The server refuses any save that keeps a permission the admin lacks.
+    it("is read-only when the role grants permissions the admin lacks", () => {
+      const me = adminMe({ roleId: "roles_other" as never, permissions: ["role.manage"] });
+      renderAdmin(<RoleForm id="roles_mod" />, { locale, me });
+
+      expect(screen.getByText(t.RoleForm.aboveLevel)).toBeInTheDocument();
+      expect(screen.queryByRole("button")).not.toBeInTheDocument();
     });
 
     it("shows the Super Admin role as locked, with every permission", () => {

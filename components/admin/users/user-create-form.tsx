@@ -68,10 +68,11 @@ export function UserCreateForm() {
     if (name.trim() === "") errors.name = tAuth("required");
     if (normalized === "") errors.email = tAuth("required");
     else if (!isEmail(normalized)) errors.email = tErrors("EMAIL_INVALID");
-    if (roleId === "") errors.role = tAuth("required");
+    const role = assignable.find((r) => r._id === roleId);
+    if (role === undefined) errors.role = tAuth("required");
     setFieldErrors(errors);
     setError(null);
-    if (Object.keys(errors).length > 0) {
+    if (Object.keys(errors).length > 0 || role === undefined) {
       focusFirstInvalid([
         ["name", errors.name],
         ["email", errors.email],
@@ -82,11 +83,7 @@ export function UserCreateForm() {
 
     setPending(true);
     try {
-      const result = await createUser({
-        name: name.trim(),
-        email: normalized,
-        roleId: roleId as Id<"roles">,
-      });
+      const result = await createUser({ name: name.trim(), email: normalized, roleId: role._id });
       setCreated({ ...result, name: name.trim() });
       // The form starts fresh if the admin comes back to it.
       setName("");

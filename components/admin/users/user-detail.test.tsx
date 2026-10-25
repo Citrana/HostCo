@@ -105,6 +105,29 @@ describe.each(LOCALES)("UserDetail (%s)", (locale, messages) => {
     expect(await screen.findByRole("status")).toHaveTextContent(t.UserDetail.saved);
   });
 
+  // A form opened before someone else changed the role mustn't put it back.
+  it("leaves the role out when only the name changes", async () => {
+    renderDetail();
+
+    await userEvent.type(screen.getByLabelText(t.UserForm.name), " M.");
+    await userEvent.click(screen.getByRole("button", { name: t.UserDetail.save }));
+
+    expect(mutations.get("users:update")).toHaveBeenCalledWith({
+      id: "users_grace",
+      name: "Grace Mbuyi M.",
+    });
+  });
+
+  it("requires a role", async () => {
+    renderDetail();
+
+    await userEvent.selectOptions(screen.getByLabelText(t.UserForm.role), t.UserForm.rolePlaceholder);
+    await userEvent.click(screen.getByRole("button", { name: t.UserDetail.save }));
+
+    expect(screen.getByText(messages.Auth.required)).toBeInTheDocument();
+    expect(mutations.get("users:update")).not.toHaveBeenCalled();
+  });
+
   it("requires a name", async () => {
     renderDetail();
 
@@ -153,6 +176,7 @@ describe.each(LOCALES)("UserDetail (%s)", (locale, messages) => {
     renderDetail();
 
     await userEvent.click(screen.getByRole("button", { name: t.UserDetail.resetPin }));
+    expect(screen.getByRole("button", { name: t.UserDetail.cancel })).toHaveFocus();
     expect(mutations.get("users:resetPin")).not.toHaveBeenCalled();
     await userEvent.click(screen.getByRole("button", { name: t.UserDetail.resetPinConfirm }));
 
@@ -161,6 +185,7 @@ describe.each(LOCALES)("UserDetail (%s)", (locale, messages) => {
     expect(dialog).toHaveTextContent("55501234");
     await userEvent.click(within(dialog).getByRole("button", { name: t.Pin.done }));
     expect(screen.queryByText("55501234")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: t.UserDetail.resetPin })).toHaveFocus();
   });
 
   it("can cancel generating a new PIN", async () => {

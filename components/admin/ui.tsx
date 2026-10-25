@@ -7,6 +7,11 @@ import { Link } from "@/i18n/navigation";
 const focusRing =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
+/** A ref that focuses its element once, when it appears (e.g. "Cancel" in a confirmation). */
+export function focusOnMount(element: HTMLElement | null) {
+  element?.focus();
+}
+
 export const buttonStyles = {
   primary: `inline-flex h-12 items-center justify-center rounded-full bg-primary px-6 text-base font-medium text-on-primary transition-colors hover:bg-primary-hover aria-disabled:cursor-wait ${focusRing}`,
   secondary: `inline-flex h-12 items-center justify-center rounded-full bg-primary-soft px-6 text-base font-medium text-primary transition-colors hover:bg-border aria-disabled:cursor-wait ${focusRing}`,

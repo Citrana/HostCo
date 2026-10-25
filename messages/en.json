@@ -192,7 +192,8 @@
       "deleteConfirm": "Confirm deletion",
       "cancel": "Cancel",
       "locked": "The Super Admin role holds every permission. It can’t be edited or deleted.",
-      "ownRole": "This is your own role: another admin has to edit it."
+      "ownRole": "This is your own role: another admin has to edit it.",
+      "aboveLevel": "This role grants permissions your own role doesn’t hold. Only an admin who holds them can edit it."
     },
     "PermissionGroups": {
       "property": "Properties",

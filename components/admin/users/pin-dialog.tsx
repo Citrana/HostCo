@@ -1,7 +1,15 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
 import { buttonStyles, StatusMessage } from "../ui";
 
 /**
@@ -11,8 +19,20 @@ import { buttonStyles, StatusMessage } from "../ui";
  */
 export function useOneTimePin<T extends { pin: string }>() {
   const [issued, setIssued] = useState<T | null>(null);
-  useLayoutEffect(() => () => setIssued(null), []);
-  return [issued, setIssued] as const;
+  const visible = useRef(true);
+  useLayoutEffect(() => {
+    visible.current = true;
+    return () => {
+      visible.current = false;
+      setIssued(null);
+    };
+  }, []);
+  // A PIN that arrives while the page is hidden is dropped too; the admin can
+  // issue a new one, which is safer than showing a stale one later.
+  const keep = useCallback((value: T | null) => {
+    if (value === null || visible.current) setIssued(value);
+  }, []);
+  return [issued, keep] as const;
 }
 
 /**
@@ -23,6 +43,7 @@ export function PinDialog({ pin, name, onDone }: { pin: string; name: string; on
   const t = useTranslations("Admin.Pin");
   const titleId = useId();
   const introId = useId();
+  const pinId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const copyRef = useRef<HTMLButtonElement>(null);
   const [copyStatus, setCopyStatus] = useState<"copied" | "copyFailed" | null>(null);
@@ -64,7 +85,7 @@ export function PinDialog({ pin, name, onDone }: { pin: string; name: string; on
         role="alertdialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        aria-describedby={introId}
+        aria-describedby={`${introId} ${pinId}`}
         onKeyDown={trapFocus}
         className="flex w-full max-w-md flex-col gap-5 rounded-card bg-surface p-8 shadow-card"
       >
@@ -76,7 +97,7 @@ export function PinDialog({ pin, name, onDone }: { pin: string; name: string; on
         </p>
         <div className="flex flex-col gap-1.5">
           <span className="text-sm font-medium text-ink">{t("label")}</span>
-          <p className="rounded-field bg-canvas px-4 py-3 text-center font-mono text-3xl font-semibold tracking-widest text-ink">
+          <p id={pinId} className="rounded-field bg-canvas px-4 py-3 text-center font-mono text-3xl font-semibold tracking-widest text-ink">
             {pin}
           </p>
         </div>

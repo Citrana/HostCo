@@ -5,7 +5,7 @@ import type { FunctionReturnType } from "convex/server";
 import { useFormatter, useTranslations } from "next-intl";
 import { useRef, useState, type FormEvent } from "react";
 import { api } from "@/convex/_generated/api";
-import type { Doc, Id } from "@/convex/_generated/dataModel";
+import type { Doc } from "@/convex/_generated/dataModel";
 import { Link } from "@/i18n/navigation";
 import { toErrorCode, type ClientErrorCode } from "@/lib/auth/errors";
 import { useLocaleKey } from "@/lib/i18n/use-locale-key";
@@ -17,7 +17,11 @@ import {
   TextField,
 } from "../../auth/form-parts";
 import { can, canAssignRole, useAdminMe, type AdminMe } from "../admin-session";
-import { BackLink, buttonStyles, Loading, NoAccess, PageHeader, Panel, StatusMessage } from "../ui";
+import {
+  BackLink,
+  buttonStyles,
+  focusOnMount,
+  Loading, NoAccess, PageHeader, Panel, StatusMessage } from "../ui";
 import { PinDialog, useOneTimePin } from "./pin-dialog";
 import { UserStatusBadges } from "./user-list";
 
@@ -111,8 +115,10 @@ function ProfileForm({
   const locale = useLocaleKey();
   const updateUser = useMutation(api.users.update);
   const [name, setName] = useState(user.name);
+  // The role the form opened with: only a role the admin picked is sent.
+  const [initialRoleId] = useState<string>(user.roleId);
   const [roleId, setRoleId] = useState<string>(user.roleId);
-  const [nameError, setNameError] = useState<string | undefined>();
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; role?: string }>({});
   const [error, setError] = useState<ClientErrorCode | null>(null);
   const [saved, setSaved] = useState(false);
   const [pending, setPending] = useState(false);
@@ -123,17 +129,28 @@ function ProfileForm({
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     if (pending) return;
-    const error = name.trim() === "" ? tAuth("required") : undefined;
-    setNameError(error);
+    const role = roles.find((r) => r._id === roleId);
+    const errors = {
+      name: name.trim() === "" ? tAuth("required") : undefined,
+      role: role === undefined ? tAuth("required") : undefined,
+    };
+    setFieldErrors(errors);
     setError(null);
     setSaved(false);
-    if (error !== undefined) {
-      focusFirstInvalid([["name", error]]);
+    if (errors.name !== undefined || role === undefined) {
+      focusFirstInvalid([
+        ["name", errors.name],
+        ["role", errors.role],
+      ]);
       return;
     }
     setPending(true);
     try {
-      await updateUser({ id: user._id, name: name.trim(), roleId: roleId as Id<"roles"> });
+      await updateUser({
+        id: user._id,
+        name: name.trim(),
+        ...(roleId === initialRoleId ? {} : { roleId: role._id }),
+      });
       setSaved(true);
     } catch (caught) {
       setError(toErrorCode(caught));
@@ -152,7 +169,7 @@ function ProfileForm({
           label={t("UserForm.name")}
           value={name}
           onChange={setName}
-          error={nameError}
+          error={fieldErrors.name}
           autoComplete="off"
         />
         <SelectField
@@ -162,6 +179,7 @@ function ProfileForm({
           value={roleId}
           onChange={setRoleId}
           options={options.map((role) => ({ value: role._id, label: role.name[locale] }))}
+          error={fieldErrors.role}
         />
         <StatusMessage message={saved ? t("UserDetail.saved") : null} />
         <SubmitButton
@@ -180,7 +198,7 @@ function AccessPanel({ user }: { user: AdminUser }) {
   const format = useFormatter();
   const setStatus = useMutation(api.users.setStatus);
   const resetPin = useMutation(api.users.resetPin);
-  // Set when "Cancel" hides the confirmation, so focus returns to the button.
+  // Set when the confirmation closes, so focus returns to the button.
   const refocusReset = useRef(false);
   const [confirmingReset, setConfirmingReset] = useState(false);
   const [error, setError] = useState<ClientErrorCode | null>(null);
@@ -234,6 +252,9 @@ function AccessPanel({ user }: { user: AdminUser }) {
               onClick={() =>
                 run(async () => {
                   setIssued(await resetPin({ id: user._id }));
+                  // Focus goes back to "Generate" first, so the PIN dialog
+                  // returns it there when it closes.
+                  refocusReset.current = true;
                   setConfirmingReset(false);
                 })
               }
@@ -242,6 +263,7 @@ function AccessPanel({ user }: { user: AdminUser }) {
               {pending ? t("working") : t("resetPinConfirm")}
             </button>
             <button
+              ref={focusOnMount}
               type="button"
               onClick={() => {
                 refocusReset.current = true;

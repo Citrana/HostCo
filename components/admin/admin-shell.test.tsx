@@ -140,6 +140,28 @@ describe.each(LOCALES)("AdminShell (%s)", (locale, messages) => {
     expect(toggle).toHaveFocus();
   });
 
+  it("closes the account menu on a click elsewhere, such as a nav link", async () => {
+    renderShell();
+    const toggle = screen.getByRole("button", { name: new RegExp(me.name) });
+    expect(toggle).not.toHaveAttribute("aria-controls");
+
+    await userEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-controls");
+    await userEvent.click(screen.getByRole("main"));
+
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("signs out only once on a double click", async () => {
+    const auth = fakeAuthClient({ signOut: vi.fn(() => new Promise<void>(() => {})) });
+    renderShell(auth);
+
+    await userEvent.click(screen.getByRole("button", { name: new RegExp(me.name) }));
+    await userEvent.dblClick(screen.getByRole("button", { name: t.accountMenu.signOut }));
+
+    expect(auth.signOut).toHaveBeenCalledOnce();
+  });
+
   it("signs out from the account menu with a full page load", async () => {
     const auth = fakeAuthClient();
     renderShell(auth);

@@ -21,6 +21,8 @@ describe.each(LOCALES)("PinDialog (%s)", (locale, messages) => {
     expect(dialog).toHaveAttribute("aria-modal", "true");
     expect(dialog).toHaveTextContent("40719263");
     expect(dialog).toHaveTextContent(t.intro.replace("{name}", "Grace Mbuyi"));
+    // Focus starts on Copy, so the PIN must be part of what is announced.
+    expect(dialog).toHaveAccessibleDescription(expect.stringContaining("40719263"));
   });
 
   it("moves focus into the dialog and keeps it there", async () => {

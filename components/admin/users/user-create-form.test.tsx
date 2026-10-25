@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ConvexError } from "convex/values";
 import { Activity } from "react";
@@ -106,6 +106,24 @@ describe.each(LOCALES)("UserCreateForm (%s)", (locale, messages) => {
 
     expect(screen.queryByText("40719263")).not.toBeInTheDocument();
     expect(screen.getByLabelText(t.UserForm.name)).toHaveValue("");
+  });
+
+  it("doesn't keep a PIN that arrives while the page is hidden", async () => {
+    let finish: (value: { id: string; pin: string }) => void = () => {};
+    mutations.get("users:create").mockReturnValue(new Promise((resolve) => (finish = resolve)));
+    const page = (mode: "visible" | "hidden") => (
+      <Activity mode={mode}>
+        <UserCreateForm />
+      </Activity>
+    );
+    const { rerender } = renderAdmin(page("visible"), { locale });
+    await fill("Grace Mbuyi", "grace@example.com", roles[1].name[locale]);
+
+    rerender(page("hidden"));
+    await act(async () => finish({ id: "users_new", pin: "40719263" }));
+    rerender(page("visible"));
+
+    expect(screen.queryByText("40719263")).not.toBeInTheDocument();
   });
 
   it("shows server errors in the current language", async () => {

@@ -192,7 +192,8 @@
       "deleteConfirm": "Confirmer la suppression",
       "cancel": "Annuler",
       "locked": "Le rôle Super administrateur détient toutes les autorisations. Il ne peut être ni modifié ni supprimé.",
-      "ownRole": "C’est votre propre rôle : un autre administrateur doit le modifier."
+      "ownRole": "C’est votre propre rôle : un autre administrateur doit le modifier.",
+      "aboveLevel": "Ce rôle accorde des autorisations que votre rôle ne détient pas. Seul un administrateur qui les détient peut le modifier."
     },
     "PermissionGroups": {
       "property": "Biens immobiliers",
