@@ -42,6 +42,8 @@ async function getEditableRole(ctx: MutationCtx, id: Id<"roles">, callerRole: Do
   if (role.isSystem) throw appError("SYSTEM_ROLE_LOCKED");
   // Nobody widens or deletes the role they act with.
   if (role._id === callerRole._id) throw appError("FORBIDDEN");
+  // Nor rewrites a role above their own level, which would demote its holders.
+  assertCanGrant(callerRole, role.permissions);
   return role;
 }
 

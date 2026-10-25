@@ -201,11 +201,25 @@ describe("roles.create", () => {
 });
 
 describe("roles.update", () => {
+  // Otherwise a role manager could strip or lock out staff above their level.
+  it("doesn't let a non-system manager rewrite a role with permissions they lack", async () => {
+    const t = setupConvex();
+    const { as } = await createUser(t, { permissions: ["role.manage", "property.create"] });
+    const id = await t.run((ctx) =>
+      ctx.db.insert("roles", { key: null, name, permissions: ["user.manage"], isSystem: false }),
+    );
+
+    await expectErrorCode(
+      as.mutation(api.roles.update, { id, name, permissions: [] }),
+      "FORBIDDEN",
+    );
+  });
+
   const changes = { name: { fr: " Relecteur", en: "Reviewer " }, permissions: ["property.publish" as const] };
 
   it("updates the name and permissions of a custom role", async () => {
     const t = setupConvex();
-    const { as } = await createUser(t, { permissions: ["role.manage", "property.publish"] });
+    const { as } = await createUser(t, { permissions: ["role.manage", "property.publish", "property.create"] });
     const id = await insertRole(t, { key: "contentManager" });
 
     await as.mutation(api.roles.update, { id, ...changes });
@@ -258,7 +272,7 @@ describe("roles.update", () => {
 
   it("rejects a blank name", async () => {
     const t = setupConvex();
-    const { as } = await createUser(t, { permissions: ["role.manage"] });
+    const { as } = await createUser(t, { permissions: ["role.manage", "property.create"] });
     const id = await insertRole(t);
 
     await expectErrorCode(
@@ -284,9 +298,19 @@ describe("roles.update", () => {
 });
 
 describe("roles.remove", () => {
-  it("deletes a role nobody uses", async () => {
+  it("doesn't let a non-system manager delete a role with permissions they lack", async () => {
     const t = setupConvex();
     const { as } = await createUser(t, { permissions: ["role.manage"] });
+    const id = await t.run((ctx) =>
+      ctx.db.insert("roles", { key: null, name, permissions: ["user.manage"], isSystem: false }),
+    );
+
+    await expectErrorCode(as.mutation(api.roles.remove, { id }), "FORBIDDEN");
+  });
+
+  it("deletes a role nobody uses", async () => {
+    const t = setupConvex();
+    const { as } = await createUser(t, { permissions: ["role.manage", "property.create"] });
     const id = await insertRole(t);
 
     await as.mutation(api.roles.remove, { id });
@@ -296,7 +320,7 @@ describe("roles.remove", () => {
 
   it("refuses to delete a role that a user still has", async () => {
     const t = setupConvex();
-    const { as } = await createUser(t, { permissions: ["role.manage"] });
+    const { as } = await createUser(t, { permissions: ["role.manage", "user.view"] });
     const { roleId } = await createUser(t, { permissions: ["user.view"] });
 
     await expectErrorCode(as.mutation(api.roles.remove, { id: roleId }), "ROLE_IN_USE");
