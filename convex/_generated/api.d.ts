@@ -22,6 +22,7 @@ import type * as rateLimits from "../rateLimits.js";
 import type * as roles from "../roles.js";
 import type * as seed from "../seed.js";
 import type * as setup from "../setup.js";
+import type * as testing from "../testing.js";
 
 import type {
   ApiFromModules,
@@ -44,6 +45,7 @@ declare const fullApi: ApiFromModules<{
   roles: typeof roles;
   seed: typeof seed;
   setup: typeof setup;
+  testing: typeof testing;
 }>;
 
 /**
