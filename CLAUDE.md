@@ -58,3 +58,17 @@ These rules are mandatory. If a request conflicts with them, say so before you a
 - Read the relevant guide in `node_modules/next/dist/docs/` before using any Next.js API. Next 16 differs from your training data (e.g. `proxy.ts` instead of `middleware.ts`, `next/root-params`, Cache Components).
 - Keep changes small and focused, and follow the patterns already in the codebase.
 - Accessibility: semantic HTML, full keyboard navigation, WCAG AA contrast.
+
+<!-- convex-ai-start -->
+
+This project uses [Convex](https://convex.dev) as its backend.
+
+When working on Convex code, **always read
+`convex/_generated/ai/guidelines.md` first** for important guidelines on
+how to correctly use Convex APIs and patterns. The file contains rules that
+override what you may have learned about Convex from training data.
+
+Convex agent skills for common tasks can be installed by running
+`npx convex ai-files install`.
+
+<!-- convex-ai-end -->
