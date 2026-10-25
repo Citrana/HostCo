@@ -1,5 +1,15 @@
+import { v } from "convex/values";
 import { components } from "./_generated/api";
 import { internalMutation } from "./_generated/server";
+import { createCredentialUser } from "./lib/accounts";
+import { generatePin, PIN_TTL_MS } from "./lib/pin";
+import { ensureDefaultRoles } from "./seed";
+
+function requireTestDeployment(name: string) {
+  if (process.env.IS_TEST !== "true") {
+    throw new Error(`testing:${name} only runs on deployments with IS_TEST=true`);
+  }
+}
 
 // Better Auth models that hold per-user or per-request data. `jwks` (the
 // signing keys) is kept so existing deployments don't rotate keys on reset.
@@ -15,9 +25,7 @@ const PAGE = { numItems: 1000, cursor: null };
 export const reset = internalMutation({
   args: {},
   handler: async (ctx) => {
-    if (process.env.IS_TEST !== "true") {
-      throw new Error("testing:reset only runs on deployments with IS_TEST=true");
-    }
+    requireTestDeployment("reset");
     for (const table of ["users", "roles"] as const) {
       for (const doc of await ctx.db.query(table).take(PAGE.numItems)) {
         await ctx.db.delete(table, doc._id);
@@ -30,5 +38,34 @@ export const reset = internalMutation({
       });
     }
     return null;
+  },
+});
+
+/**
+ * Creates a user with a fresh one-time PIN and returns the PIN, the way PR 4's
+ * admin "create user" will. Lets e2e cover the PIN flow before that UI exists.
+ */
+export const createPinUser = internalMutation({
+  args: { email: v.string() },
+  handler: async (ctx, args) => {
+    requireTestDeployment("createPinUser");
+    const roleId = await ensureDefaultRoles(ctx);
+    const pin = generatePin();
+    const authUserId = await createCredentialUser(ctx, {
+      name: "PIN User",
+      email: args.email,
+      password: pin,
+    });
+    await ctx.db.insert("users", {
+      authUserId,
+      name: "PIN User",
+      email: args.email,
+      roleId,
+      status: "active",
+      mustChangePassword: true,
+      pinExpiresAt: Date.now() + PIN_TTL_MS,
+      createdBy: null,
+    });
+    return { pin };
   },
 });

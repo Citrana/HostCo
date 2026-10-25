@@ -27,3 +27,28 @@ describe("testing.reset", () => {
     expect((await signIn(t, email, password)).status).toBe(401);
   });
 });
+
+describe("testing.createPinUser", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("refuses to run unless IS_TEST is set", async () => {
+    const t = setupConvex();
+
+    await expect(
+      t.mutation(internal.testing.createPinUser, { email: "pin@example.com" }),
+    ).rejects.toThrow(/IS_TEST/);
+  });
+
+  it("creates a user who must replace a fresh PIN", async () => {
+    vi.stubEnv("IS_TEST", "true");
+    const t = setupConvex();
+
+    const { pin } = await t.mutation(internal.testing.createPinUser, { email: "pin@example.com" });
+
+    expect(pin).toMatch(/^\d{8}$/);
+    const [user] = await t.run((ctx) => ctx.db.query("users").collect());
+    expect(user).toMatchObject({ email: "pin@example.com", mustChangePassword: true });
+    expect(user.pinExpiresAt).toBeGreaterThan(Date.now());
+    expect((await signIn(t, "pin@example.com", pin)).status).toBe(200);
+  });
+});
