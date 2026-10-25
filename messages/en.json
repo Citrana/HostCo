@@ -1,0 +1,14 @@
+{
+  "Metadata": {
+    "title": "hostco",
+    "description": "Find, rent and sell property with ease."
+  },
+  "HomePage": {
+    "nextLogoAlt": "Next.js logo",
+    "vercelLogoAlt": "Vercel logomark",
+    "title": "To get started, edit the <code>page.tsx</code> file.",
+    "intro": "Looking for a starting point or more instructions? Head over to <templates>Templates</templates> or the <learning>Learning</learning> center.",
+    "deploy": "Deploy Now",
+    "docs": "Documentation"
+  }
+}

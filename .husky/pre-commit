@@ -1,0 +1,18 @@
+branch="$(git rev-parse --abbrev-ref HEAD)"
+
+if [ "$branch" != "main" ] && [ "$branch" != "develop" ]; then
+  if ! echo "$branch" | grep -Eq '^(feat|fix|refactor|chore|docs|test)/[a-z0-9]+(-[a-z0-9]+)*$'; then
+    echo "Invalid branch name: $branch"
+    echo "Use <type>/<kebab-case-description>, type = feat|fix|refactor|chore|docs|test"
+    echo "Example: feat/property-listing-form"
+    exit 1
+  fi
+fi
+
+# Git clients may start hooks with an older Node; use the version from .nvmrc when nvm is available.
+if [ -s "$HOME/.nvm/nvm.sh" ]; then
+  . "$HOME/.nvm/nvm.sh"
+  nvm use --silent >/dev/null
+fi
+
+pnpm test
