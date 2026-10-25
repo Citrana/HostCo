@@ -31,5 +31,47 @@
     "PASSWORD_TOO_LONG": "Le mot de passe ne peut pas dépasser 128 caractères.",
     "PASSWORD_REUSED": "Le nouveau mot de passe doit être différent de l’actuel.",
     "UNKNOWN": "Une erreur inattendue s’est produite. Réessayez."
+  },
+  "Auth": {
+    "required": "Ce champ est obligatoire.",
+    "loading": "Chargement…",
+    "fields": {
+      "name": "Nom complet",
+      "email": "Adresse e-mail",
+      "password": "Mot de passe",
+      "secret": "Mot de passe ou code PIN",
+      "currentPassword": "Mot de passe actuel ou code PIN",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmez le nouveau mot de passe"
+    },
+    "passwordHint": "Au moins 10 caractères.",
+    "SignIn": {
+      "metaTitle": "Connexion",
+      "title": "Connexion à l’espace équipe",
+      "intro": "Utilisez votre mot de passe, ou le code PIN reçu de votre administrateur pour une première connexion.",
+      "submit": "Se connecter",
+      "submitting": "Connexion…"
+    },
+    "Setup": {
+      "metaTitle": "Configuration",
+      "title": "Créer le premier compte administrateur",
+      "intro": "Ce compte Super administrateur pourra ensuite créer les comptes de l’équipe. Cette page n’est disponible qu’une seule fois.",
+      "submit": "Créer le compte",
+      "submitting": "Création…"
+    },
+    "ChangePassword": {
+      "metaTitle": "Nouveau mot de passe",
+      "title": "Choisissez votre mot de passe",
+      "intro": "Pour sécuriser votre compte, remplacez votre code PIN par un mot de passe personnel.",
+      "mismatch": "Les deux mots de passe ne correspondent pas.",
+      "submit": "Enregistrer le mot de passe",
+      "submitting": "Enregistrement…"
+    },
+    "Admin": {
+      "metaTitle": "Espace équipe",
+      "welcome": "Bienvenue, {name}",
+      "role": "Rôle : {role}",
+      "signOut": "Se déconnecter"
+    }
   }
 }

@@ -1,13 +1,12 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { createCredentialUser } from "./lib/accounts";
+import { isEmail, normalizeEmail } from "./lib/email";
 import { appError } from "./lib/errors";
 import { passwordProblem } from "./lib/password";
 import { ensureDefaultRoles } from "./seed";
 
 const MAX_NAME_LENGTH = 100;
-// Deliberately loose: one @, something on each side, a dot in the domain.
-const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** Public: the setup page is only usable while no user exists. */
 export const status = query({
@@ -29,9 +28,9 @@ export const bootstrapSuperAdmin = mutation({
     if ((await ctx.db.query("users").first()) !== null) throw appError("SETUP_ALREADY_DONE");
 
     const name = args.name.trim();
-    const email = args.email.trim().toLowerCase();
+    const email = normalizeEmail(args.email);
     if (name.length === 0 || name.length > MAX_NAME_LENGTH) throw appError("NAME_INVALID");
-    if (!EMAIL_SHAPE.test(email)) throw appError("EMAIL_INVALID");
+    if (!isEmail(email)) throw appError("EMAIL_INVALID");
     const problem = passwordProblem(args.password);
     if (problem !== null) throw appError(problem);
 
