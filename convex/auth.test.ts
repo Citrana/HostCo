@@ -110,6 +110,23 @@ describe("sign-in", () => {
     expect(statuses.filter((status) => status === 429)).toEqual([]);
   });
 
+  // Checking the limit and recording a failure must be one step; otherwise
+  // parallel guesses all pass the check before any failure is recorded.
+  it("enforces the email limit on parallel attempts", async () => {
+    const t = setupConvex();
+    const { email } = await createAccount(t);
+
+    const responses = await Promise.all(
+      Array.from({ length: 10 }, (_, attempt) =>
+        signIn(t, email, `wrong-password-${attempt}`, { ip: `203.0.113.${attempt}` }),
+      ),
+    );
+
+    const statuses = responses.map((response) => response.status);
+    expect(statuses.filter((status) => status === 401)).toHaveLength(5);
+    expect(statuses.filter((status) => status === 429)).toHaveLength(5);
+  });
+
   it("doesn't count successful sign-ins against the email limit", async () => {
     const t = setupConvex();
     const { email, password } = await createAccount(t);
