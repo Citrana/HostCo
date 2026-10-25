@@ -35,7 +35,16 @@ describe("roles.list", () => {
     await expect(as.query(api.roles.list, {})).resolves.toHaveLength(1);
   });
 
-  it("is forbidden without user.view or role.manage", async () => {
+  // Creating or editing a user means picking a role.
+  it("returns the roles to a user with user.manage", async () => {
+    const t = setupConvex();
+    const { as, roleId } = await createUser(t, { permissions: ["user.manage"] });
+
+    await expect(as.query(api.roles.list, {})).resolves.toMatchObject([{ _id: roleId }]);
+    await expect(as.query(api.roles.get, { id: roleId })).resolves.toMatchObject({ _id: roleId });
+  });
+
+  it("is forbidden without user.view, user.manage or role.manage", async () => {
     const t = setupConvex();
     const { as } = await createUser(t, { permissions: ["property.create"] });
 
@@ -77,7 +86,7 @@ describe("roles.get", () => {
     await expect(as.query(api.roles.get, { id })).resolves.toBeNull();
   });
 
-  it("is forbidden without user.view or role.manage", async () => {
+  it("is forbidden without user.view, user.manage or role.manage", async () => {
     const t = setupConvex();
     const { as } = await createUser(t, { permissions: ["property.create"] });
     const id = await insertRole(t);

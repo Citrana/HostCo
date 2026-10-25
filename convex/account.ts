@@ -20,6 +20,7 @@ export const me = query({
     const role = await ctx.db.get("roles", user.roleId);
     return {
       id: user._id,
+      roleId: user.roleId,
       name: user.name,
       email: user.email,
       roleName: role?.name ?? null,

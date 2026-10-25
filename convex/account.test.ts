@@ -28,11 +28,13 @@ describe("account.me", () => {
 
   it("returns the user's id and the permissions their role grants", async () => {
     const t = setupConvex();
-    const { as, userId } = await createUser(t, { permissions: ["user.view", "role.manage"] });
+    const { as, userId, roleId } = await createUser(t, {
+      permissions: ["user.view", "role.manage"],
+    });
 
     const me = await as.query(api.account.me, {});
 
-    expect(me).toMatchObject({ id: userId, permissions: ["user.view", "role.manage"] });
+    expect(me).toMatchObject({ id: userId, roleId, permissions: ["user.view", "role.manage"] });
   });
 
   it("gives a Super Admin every permission", async () => {

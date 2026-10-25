@@ -15,6 +15,9 @@ const MAX_NAME_LENGTH = 60;
 // Roles are a short admin-managed list; this only bounds the read.
 const MAX_ROLES = 200;
 
+// Picking a role for a user needs the list, as does managing roles.
+const ROLE_READERS = ["user.view", "user.manage", "role.manage"] as const;
+
 const roleFields = {
   name: localized,
   permissions: v.array(permissionValidator),
@@ -45,7 +48,7 @@ async function getEditableRole(ctx: MutationCtx, id: Id<"roles">, callerRole: Do
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    await requireAnyPermission(ctx, ["user.view", "role.manage"]);
+    await requireAnyPermission(ctx, ROLE_READERS);
     return await ctx.db.query("roles").take(MAX_ROLES);
   },
 });
@@ -55,7 +58,7 @@ export const get = query({
   // read as "not found" rather than fail the page.
   args: { id: v.string() },
   handler: async (ctx, args) => {
-    await requireAnyPermission(ctx, ["user.view", "role.manage"]);
+    await requireAnyPermission(ctx, ROLE_READERS);
     const id = ctx.db.normalizeId("roles", args.id);
     return id === null ? null : await ctx.db.get("roles", id);
   },
