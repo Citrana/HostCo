@@ -1,6 +1,7 @@
 "use client";
 
 import { useLocale } from "next-intl";
+import { useCallback } from "react";
 import { getPathname } from "@/i18n/navigation";
 
 /**
@@ -11,5 +12,9 @@ import { getPathname } from "@/i18n/navigation";
  */
 export function useOpenPage() {
   const locale = useLocale();
-  return (href: string) => window.location.assign(getPathname({ href, locale }));
+  // Stable, so effects that depend on it don't re-run on every render.
+  return useCallback(
+    (href: string) => window.location.assign(getPathname({ href, locale })),
+    [locale],
+  );
 }

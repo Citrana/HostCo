@@ -22,7 +22,7 @@ describe("account.me", () => {
 
     const role = await t.run((ctx) => ctx.db.get("roles", roleId));
     expect(me).toMatchObject({ mustChangePassword: false, roleName: role?.name });
-    expect(me.email).toMatch(/@example\.com$/);
+    expect(me?.email).toMatch(/@example\.com$/);
   });
 
   it("still answers while the user must change their password", async () => {
@@ -32,17 +32,24 @@ describe("account.me", () => {
     await expect(as.query(api.account.me, {})).resolves.toMatchObject({ mustChangePassword: true });
   });
 
-  it("rejects a disabled user", async () => {
+  // null instead of an error: useQuery would throw it during render.
+  it("returns null for a disabled user", async () => {
     const t = setupConvex();
     const { as } = await createUser(t, { status: "disabled" });
 
-    await expectErrorCode(as.query(api.account.me, {}), "ACCOUNT_DISABLED");
+    await expect(as.query(api.account.me, {})).resolves.toBeNull();
   });
 
-  it("rejects an unauthenticated caller", async () => {
+  it("returns null for an identity without a profile", async () => {
     const t = setupConvex();
 
-    await expectErrorCode(t.query(api.account.me, {}), "UNAUTHENTICATED");
+    await expect(t.withIdentity({ subject: "gone" }).query(api.account.me, {})).resolves.toBeNull();
+  });
+
+  it("returns null for an unauthenticated caller", async () => {
+    const t = setupConvex();
+
+    await expect(t.query(api.account.me, {})).resolves.toBeNull();
   });
 });
 
@@ -60,11 +67,12 @@ describe("account.changePassword", () => {
     const { email, password, userId } = await pinUser(t);
     const { as } = await signedIn(t, email, password);
 
-    await as.mutation(api.account.changePassword, {
+    const result = await as.mutation(api.account.changePassword, {
       currentPassword: password,
       newPassword: NEW_PASSWORD,
     });
 
+    expect(result).toEqual({ ok: true });
     expect(await profileOf(t, userId)).toMatchObject({
       mustChangePassword: false,
       pinExpiresAt: null,
@@ -93,13 +101,27 @@ describe("account.changePassword", () => {
     const { email, password, userId } = await pinUser(t);
     const { as } = await signedIn(t, email, password);
 
-    await expectErrorCode(
-      as.mutation(api.account.changePassword, {
-        currentPassword: "87654321",
-        newPassword: NEW_PASSWORD,
-      }),
-      "INVALID_CREDENTIALS",
-    );
+    const result = await as.mutation(api.account.changePassword, {
+      currentPassword: "87654321",
+      newPassword: NEW_PASSWORD,
+    });
+
+    expect(result).toEqual({ ok: false, code: "INVALID_CREDENTIALS" });
+    expect(await profileOf(t, userId)).toMatchObject({ mustChangePassword: true });
+  });
+
+  it("stops guessing the current password after 5 wrong attempts", async () => {
+    const t = setupConvex();
+    const { email, password, userId } = await pinUser(t);
+    const { as } = await signedIn(t, email, password);
+    const attempt = (currentPassword: string) =>
+      as.mutation(api.account.changePassword, { currentPassword, newPassword: NEW_PASSWORD });
+
+    for (let i = 0; i < 5; i += 1) {
+      await expect(attempt(`0000000${i}`)).resolves.toMatchObject({ ok: false });
+    }
+
+    await expect(attempt(password)).resolves.toEqual({ ok: false, code: "TOO_MANY_ATTEMPTS" });
     expect(await profileOf(t, userId)).toMatchObject({ mustChangePassword: true });
   });
 

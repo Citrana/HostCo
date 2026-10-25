@@ -82,6 +82,16 @@ export function FormError({ message }: { message: string | null }) {
   );
 }
 
+/** Moves focus to the first field (in form order) that has an error. */
+export function focusFirstInvalid(fields: [id: string, error: string | undefined][]) {
+  const first = fields.find(([, error]) => error !== undefined);
+  if (first) document.getElementById(first[0])?.focus();
+}
+
+/**
+ * `aria-disabled` rather than `disabled` while pending, so keyboard focus stays
+ * on the button; the forms ignore submits while pending instead.
+ */
 export function SubmitButton({ pending, label, pendingLabel }: {
   pending: boolean;
   label: string;
@@ -90,9 +100,9 @@ export function SubmitButton({ pending, label, pendingLabel }: {
   return (
     <button
       type="submit"
-      disabled={pending}
+      aria-disabled={pending || undefined}
       aria-busy={pending || undefined}
-      className="h-12 rounded-full bg-primary px-6 text-base font-medium text-on-primary transition-colors hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-wait"
+      className="h-12 rounded-full bg-primary px-6 text-base font-medium text-on-primary transition-colors hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary aria-disabled:cursor-wait"
     >
       {/* The accessible name stays the label so the button is easy to find. */}
       <span aria-hidden={pending || undefined}>{pending ? pendingLabel : label}</span>

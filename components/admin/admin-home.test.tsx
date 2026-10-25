@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeAuthClient, LOCALES, renderWithAuth } from "../auth/test-utils";
 
 const replace = vi.hoisted(() => vi.fn());
+const openPage = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/navigation/open-page", () => ({ useOpenPage: () => openPage }));
 const useQuery = vi.hoisted(() => vi.fn());
 const useConvexAuth = vi.hoisted(() => vi.fn());
 vi.mock("@/i18n/navigation", () => ({ useRouter: () => ({ replace }) }));
@@ -23,6 +25,7 @@ describe.each(LOCALES)("AdminHome (%s)", (locale, messages) => {
 
   beforeEach(() => {
     replace.mockReset();
+    openPage.mockReset();
     useConvexAuth.mockReturnValue({ isLoading: false, isAuthenticated: true });
     useQuery.mockReturnValue(me);
   });
@@ -65,6 +68,25 @@ describe.each(LOCALES)("AdminHome (%s)", (locale, messages) => {
     expect(screen.getByText((_, element) => element?.textContent === role)).toBeInTheDocument();
   });
 
+  it("signs out a user whose account is no longer active", async () => {
+    useQuery.mockReturnValue(null);
+    const auth = fakeAuthClient();
+    renderWithAuth(<AdminHome />, { locale, auth });
+
+    await waitFor(() => expect(openPage).toHaveBeenCalledWith("/sign-in"));
+    expect(auth.signOut).toHaveBeenCalledOnce();
+  });
+
+  it("explains when signing out fails, and stays", async () => {
+    const auth = fakeAuthClient({ signOut: vi.fn().mockRejectedValue(new TypeError("offline")) });
+    renderWithAuth(<AdminHome />, { locale, auth });
+
+    await userEvent.click(screen.getByRole("button", { name: t.Admin.signOut }));
+
+    expect(await screen.findByText(messages.Errors.UNKNOWN)).toBeInTheDocument();
+    expect(openPage).not.toHaveBeenCalled();
+  });
+
   it("signs out and returns to the sign-in page", async () => {
     const auth = fakeAuthClient();
     renderWithAuth(<AdminHome />, { locale, auth });
@@ -72,6 +94,7 @@ describe.each(LOCALES)("AdminHome (%s)", (locale, messages) => {
     await userEvent.click(screen.getByRole("button", { name: t.Admin.signOut }));
 
     expect(auth.signOut).toHaveBeenCalledOnce();
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/sign-in"));
+    // A full page load clears every route Next keeps hidden for this user.
+    await waitFor(() => expect(openPage).toHaveBeenCalledWith("/sign-in"));
   });
 });

@@ -5,6 +5,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LOCALES, renderWithAuth } from "./test-utils";
 
 const replace = vi.hoisted(() => vi.fn());
+const openPage = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/navigation/open-page", () => ({ useOpenPage: () => openPage }));
 const changePassword = vi.hoisted(() => vi.fn());
 vi.mock("@/i18n/navigation", () => ({ useRouter: () => ({ replace }) }));
 vi.mock("convex/react", () => ({ useMutation: () => changePassword }));
@@ -16,7 +18,8 @@ describe.each(LOCALES)("ChangePasswordForm (%s)", (locale, messages) => {
 
   beforeEach(() => {
     replace.mockReset();
-    changePassword.mockReset().mockResolvedValue(null);
+    openPage.mockReset();
+    changePassword.mockReset().mockResolvedValue({ ok: true });
   });
 
   async function fill(current: string, next: string, confirm: string) {
@@ -26,13 +29,23 @@ describe.each(LOCALES)("ChangePasswordForm (%s)", (locale, messages) => {
     await userEvent.click(screen.getByRole("button", { name: t.ChangePassword.submit }));
   }
 
-  it("requires every field", async () => {
+  it("requires every field and moves focus to the first one", async () => {
     renderWithAuth(<ChangePasswordForm />, { locale });
 
     await fill("", "", "");
 
     expect(screen.getAllByText(t.required)).toHaveLength(3);
+    expect(screen.getByLabelText(t.fields.currentPassword)).toHaveFocus();
     expect(changePassword).not.toHaveBeenCalled();
+  });
+
+  it("shows other server errors in the current language", async () => {
+    changePassword.mockRejectedValue(new ConvexError({ code: "PASSWORD_REUSED" }));
+    renderWithAuth(<ChangePasswordForm />, { locale });
+
+    await fill("12345678", "a-brand-new-secret", "a-brand-new-secret");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(messages.Errors.PASSWORD_REUSED);
   });
 
   it("refuses a short new password", async () => {
@@ -69,11 +82,13 @@ describe.each(LOCALES)("ChangePasswordForm (%s)", (locale, messages) => {
       currentPassword: "12345678",
       newPassword: "a-brand-new-secret",
     });
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin"));
+    // A full page load: with Cache Components, the hidden /admin route would
+    // otherwise come back with its stale "must change password" state.
+    await waitFor(() => expect(openPage).toHaveBeenCalledWith("/admin"));
   });
 
-  it("shows the server's error in the current language", async () => {
-    changePassword.mockRejectedValue(new ConvexError({ code: "INVALID_CREDENTIALS" }));
+  it("shows a wrong current password in the current language", async () => {
+    changePassword.mockResolvedValue({ ok: false, code: "INVALID_CREDENTIALS" });
     renderWithAuth(<ChangePasswordForm />, { locale });
 
     await fill("87654321", "a-brand-new-secret", "a-brand-new-secret");
@@ -81,6 +96,6 @@ describe.each(LOCALES)("ChangePasswordForm (%s)", (locale, messages) => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       messages.Errors.INVALID_CREDENTIALS,
     );
-    expect(replace).not.toHaveBeenCalled();
+    expect(openPage).not.toHaveBeenCalled();
   });
 });

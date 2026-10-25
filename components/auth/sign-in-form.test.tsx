@@ -26,6 +26,7 @@ describe.each(LOCALES)("SignInForm (%s)", (locale, messages) => {
 
     expect(screen.getAllByText(t.required)).toHaveLength(2);
     expect(screen.getByLabelText(t.fields.email)).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByLabelText(t.fields.email)).toHaveFocus();
     expect(auth.signIn).not.toHaveBeenCalled();
   });
 
@@ -51,6 +52,26 @@ describe.each(LOCALES)("SignInForm (%s)", (locale, messages) => {
     // A full page load, so the auth provider starts from the new session.
     await waitFor(() => expect(openPage).toHaveBeenCalledWith("/admin"));
     expect(replace).not.toHaveBeenCalled();
+  });
+
+  it("keeps the button focusable and ignores repeat submits while signing in", async () => {
+    let finish: (value: { ok: true }) => void = () => {};
+    const auth = fakeAuthClient({
+      signIn: vi.fn(() => new Promise<{ ok: true }>((resolve) => (finish = resolve))),
+    });
+    renderWithAuth(<SignInForm />, { locale, auth });
+    await userEvent.type(screen.getByLabelText(t.fields.email), "amani@example.com");
+    await userEvent.type(screen.getByLabelText(t.fields.secret), "12345678");
+    const button = screen.getByRole("button", { name: t.SignIn.submit });
+
+    await userEvent.click(button);
+    await userEvent.click(button);
+
+    expect(button).not.toBeDisabled();
+    expect(button).toHaveAttribute("aria-disabled", "true");
+    expect(button).toHaveFocus();
+    expect(auth.signIn).toHaveBeenCalledOnce();
+    finish({ ok: true });
   });
 
   it("shows the server's error in the current language", async () => {

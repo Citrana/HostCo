@@ -10,7 +10,7 @@ import { useRouter } from "@/i18n/navigation";
 import { useAuthClient } from "@/lib/auth/client";
 import { useOpenPage } from "@/lib/navigation/open-page";
 import { toErrorCode, type ClientErrorCode } from "@/lib/auth/errors";
-import { AuthCard, FormError, SubmitButton, TextField } from "./form-parts";
+import { AuthCard, focusFirstInvalid, FormError, SubmitButton, TextField } from "./form-parts";
 
 type FieldErrors = { name?: string; email?: string; password?: string };
 
@@ -37,6 +37,7 @@ export function SetupForm() {
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
+    if (pending) return;
     const trimmedName = name.trim();
     const normalized = normalizeEmail(email);
     const problem = passwordProblem(password);
@@ -48,7 +49,14 @@ export function SetupForm() {
     else if (problem !== null) errors.password = tErrors(problem);
     setFieldErrors(errors);
     setError(null);
-    if (Object.keys(errors).length > 0) return;
+    if (Object.keys(errors).length > 0) {
+      focusFirstInvalid([
+        ["name", errors.name],
+        ["email", errors.email],
+        ["password", errors.password],
+      ]);
+      return;
+    }
 
     setPending(true);
     try {

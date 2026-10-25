@@ -26,4 +26,19 @@ describe("useOpenPage", () => {
 
     expect(assign).toHaveBeenCalledWith(`/${locale}/admin`);
   });
+
+  it("returns the same function across renders", () => {
+    const { result, rerender } = renderHook(() => useOpenPage(), {
+      wrapper: ({ children }) => (
+        <NextIntlClientProvider locale="fr" messages={{}}>
+          {children}
+        </NextIntlClientProvider>
+      ),
+    });
+    const first = result.current;
+
+    rerender();
+
+    expect(result.current).toBe(first);
+  });
 });

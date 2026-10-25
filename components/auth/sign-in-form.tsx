@@ -6,7 +6,7 @@ import { isEmail, normalizeEmail } from "@/convex/lib/email";
 import { useAuthClient } from "@/lib/auth/client";
 import type { ClientErrorCode } from "@/lib/auth/errors";
 import { useOpenPage } from "@/lib/navigation/open-page";
-import { AuthCard, FormError, SubmitButton, TextField } from "./form-parts";
+import { AuthCard, focusFirstInvalid, FormError, SubmitButton, TextField } from "./form-parts";
 
 type FieldErrors = { email?: string; secret?: string };
 
@@ -23,6 +23,7 @@ export function SignInForm() {
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
+    if (pending) return;
     const normalized = normalizeEmail(email);
     const errors: FieldErrors = {};
     if (normalized === "") errors.email = t("required");
@@ -30,7 +31,13 @@ export function SignInForm() {
     if (secret === "") errors.secret = t("required");
     setFieldErrors(errors);
     setError(null);
-    if (Object.keys(errors).length > 0) return;
+    if (Object.keys(errors).length > 0) {
+      focusFirstInvalid([
+        ["email", errors.email],
+        ["secret", errors.secret],
+      ]);
+      return;
+    }
 
     setPending(true);
     const result = await auth.signIn(normalized, secret);

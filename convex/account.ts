@@ -3,14 +3,20 @@ import { internalQuery, mutation, query } from "./_generated/server";
 import { changeOwnPassword } from "./lib/accounts";
 import { appError } from "./lib/errors";
 import { passwordProblem } from "./lib/password";
-import { requireUser } from "./lib/permissions";
+import { getCurrentUser, requireUser } from "./lib/permissions";
 import { signInBlockReason } from "./lib/pin";
+import { rateLimiter } from "./rateLimits";
 
-/** The signed-in user, including while they must still change their password. */
+/**
+ * The signed-in user, including while they must still change their password.
+ * Null when there is no active profile, instead of an error, because
+ * `useQuery` would throw the error during render.
+ */
 export const me = query({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = await getCurrentUser(ctx);
+    if (user === null || user.status === "disabled") return null;
     const role = await ctx.db.get("roles", user.roleId);
     return {
       name: user.name,
@@ -23,20 +29,31 @@ export const me = query({
 
 /**
  * Sets a new password and clears the forced-change flag in the same
- * transaction, so the flag can only clear after a successful change.
+ * transaction, so the flag can only clear after a successful change. A wrong
+ * current password is returned rather than thrown, so the failed attempt is
+ * still counted against the per-user limit.
  */
 export const changePassword = mutation({
   args: { currentPassword: v.string(), newPassword: v.string() },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ ok: true } | { ok: false; code: "INVALID_CREDENTIALS" | "TOO_MANY_ATTEMPTS" }> => {
     const user = await requireUser(ctx);
     const problem = passwordProblem(args.newPassword);
     if (problem !== null) throw appError(problem);
     // While the flag is set, the current password is the PIN.
     if (args.newPassword === args.currentPassword) throw appError("PASSWORD_REUSED");
 
-    await changeOwnPassword(ctx, args);
+    const key = user._id;
+    const { ok } = await rateLimiter.check(ctx, "failedPasswordChange", { key });
+    if (!ok) return { ok: false, code: "TOO_MANY_ATTEMPTS" };
+    if (!(await changeOwnPassword(ctx, args))) {
+      await rateLimiter.limit(ctx, "failedPasswordChange", { key });
+      return { ok: false, code: "INVALID_CREDENTIALS" };
+    }
     await ctx.db.patch("users", user._id, { mustChangePassword: false, pinExpiresAt: null });
-    return null;
+    return { ok: true };
   },
 });
 

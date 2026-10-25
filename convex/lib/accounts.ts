@@ -35,7 +35,10 @@ export async function createCredentialUser(
   return created.id;
 }
 
-/** Changes the caller's password and signs out their other sessions. */
+/**
+ * Changes the caller's password and signs out their other sessions. Returns
+ * false, without changing anything, when the current password is wrong.
+ */
 export async function changeOwnPassword(
   ctx: MutationCtx,
   passwords: { currentPassword: string; newPassword: string },
@@ -46,9 +49,7 @@ export async function changeOwnPassword(
   try {
     await auth.api.changePassword({ body: passwords, headers });
   } catch (error) {
-    if (isAPIError(error) && error.body?.code === "INVALID_PASSWORD") {
-      throw appError("INVALID_CREDENTIALS");
-    }
+    if (isAPIError(error) && error.body?.code === "INVALID_PASSWORD") return false;
     throw error;
   }
 
@@ -58,4 +59,5 @@ export async function changeOwnPassword(
   if (others.length > 0) {
     await context.internalAdapter.deleteSessions(others.map((session) => session.token));
   }
+  return true;
 }

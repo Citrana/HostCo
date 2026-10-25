@@ -54,6 +54,7 @@ describe.each(LOCALES)("SetupForm (%s)", (locale, messages) => {
     expect(screen.getByText(t.required)).toBeInTheDocument();
     expect(screen.getByText(messages.Errors.EMAIL_INVALID)).toBeInTheDocument();
     expect(screen.getByText(messages.Errors.PASSWORD_TOO_SHORT)).toBeInTheDocument();
+    expect(screen.getByLabelText(t.fields.name)).toHaveFocus();
     expect(bootstrap).not.toHaveBeenCalled();
   });
 

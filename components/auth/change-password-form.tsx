@@ -5,16 +5,16 @@ import { useTranslations } from "next-intl";
 import { useState, type FormEvent } from "react";
 import { api } from "@/convex/_generated/api";
 import { passwordProblem } from "@/convex/lib/password";
-import { useRouter } from "@/i18n/navigation";
 import { toErrorCode, type ClientErrorCode } from "@/lib/auth/errors";
-import { AuthCard, FormError, SubmitButton, TextField } from "./form-parts";
+import { useOpenPage } from "@/lib/navigation/open-page";
+import { AuthCard, focusFirstInvalid, FormError, SubmitButton, TextField } from "./form-parts";
 
 type FieldErrors = { current?: string; next?: string; confirm?: string };
 
 export function ChangePasswordForm() {
   const t = useTranslations("Auth");
   const tErrors = useTranslations("Errors");
-  const router = useRouter();
+  const openPage = useOpenPage();
   const changePassword = useMutation(api.account.changePassword);
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
@@ -25,6 +25,7 @@ export function ChangePasswordForm() {
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
+    if (pending) return;
     const problem = passwordProblem(next);
     const errors: FieldErrors = {};
     if (current === "") errors.current = t("required");
@@ -35,17 +36,28 @@ export function ChangePasswordForm() {
     else if (confirm !== next) errors.confirm = t("ChangePassword.mismatch");
     setFieldErrors(errors);
     setError(null);
-    if (Object.keys(errors).length > 0) return;
-
-    setPending(true);
-    try {
-      await changePassword({ currentPassword: current, newPassword: next });
-    } catch (caught) {
-      setError(toErrorCode(caught));
-      setPending(false);
+    if (Object.keys(errors).length > 0) {
+      focusFirstInvalid([
+        ["current-password", errors.current],
+        ["new-password", errors.next],
+        ["confirm-password", errors.confirm],
+      ]);
       return;
     }
-    router.replace("/admin");
+
+    setPending(true);
+    let result;
+    try {
+      result = await changePassword({ currentPassword: current, newPassword: next });
+    } catch (caught) {
+      result = { ok: false, code: toErrorCode(caught) } as const;
+    }
+    if (result.ok) {
+      openPage("/admin");
+      return;
+    }
+    setError(result.code);
+    setPending(false);
   }
 
   return (
