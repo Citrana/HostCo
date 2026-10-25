@@ -10,5 +10,15 @@
     "intro": "Looking for a starting point or more instructions? Head over to <templates>Templates</templates> or the <learning>Learning</learning> center.",
     "deploy": "Deploy Now",
     "docs": "Documentation"
+  },
+  "Errors": {
+    "UNAUTHENTICATED": "Please sign in to continue.",
+    "FORBIDDEN": "You don’t have permission to do this.",
+    "ACCOUNT_DISABLED": "This account is disabled. Contact an administrator.",
+    "PASSWORD_CHANGE_REQUIRED": "You must change your password before continuing.",
+    "ROLE_NOT_FOUND": "This role doesn’t exist or was deleted.",
+    "ROLE_IN_USE": "This role is assigned to users. Change their role first.",
+    "ROLE_INVALID": "The role name is required in French and English (60 characters max).",
+    "SYSTEM_ROLE_LOCKED": "The Super Admin role can’t be edited or deleted."
   }
 }

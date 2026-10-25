@@ -10,5 +10,15 @@
     "intro": "Vous cherchez un point de départ ou plus d’explications ? Consultez les <templates>modèles</templates> ou le centre d’<learning>apprentissage</learning>.",
     "deploy": "Déployer",
     "docs": "Documentation"
+  },
+  "Errors": {
+    "UNAUTHENTICATED": "Veuillez vous connecter pour continuer.",
+    "FORBIDDEN": "Vous n’avez pas l’autorisation d’effectuer cette action.",
+    "ACCOUNT_DISABLED": "Ce compte est désactivé. Contactez un administrateur.",
+    "PASSWORD_CHANGE_REQUIRED": "Vous devez changer votre mot de passe avant de continuer.",
+    "ROLE_NOT_FOUND": "Ce rôle n’existe pas ou a été supprimé.",
+    "ROLE_IN_USE": "Ce rôle est attribué à des utilisateurs. Changez d’abord leur rôle.",
+    "ROLE_INVALID": "Le nom du rôle est obligatoire en français et en anglais (60 caractères maximum).",
+    "SYSTEM_ROLE_LOCKED": "Le rôle Super administrateur ne peut être ni modifié ni supprimé."
   }
 }
