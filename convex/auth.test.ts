@@ -98,6 +98,57 @@ describe("sign-in", () => {
     expect(other.status).toBe(200);
   });
 
+  it("doesn't rate-limit nested paths like the JWKS into one shared bucket", async () => {
+    const t = setupConvex();
+
+    // Better Auth's default rule allows 100 requests per window per key.
+    const statuses = [];
+    for (let i = 0; i < 101; i += 1) {
+      statuses.push((await t.fetch("/api/auth/convex/jwks")).status);
+    }
+
+    expect(statuses.filter((status) => status === 429)).toEqual([]);
+  });
+
+  it("doesn't count successful sign-ins against the email limit", async () => {
+    const t = setupConvex();
+    const { email, password } = await createAccount(t);
+
+    for (let attempt = 0; attempt < 7; attempt += 1) {
+      const response = await signIn(t, email, password, { ip: `203.0.113.${attempt}` });
+      expect(response.status).toBe(200);
+    }
+  });
+
+  it.each([
+    ["POST", "/api/auth/change-password"],
+    ["POST", "/api/auth/update-user"],
+    ["POST", "/api/auth/delete-user"],
+    ["POST", "/api/auth/request-password-reset"],
+    ["GET", "/api/auth/list-sessions"],
+  ])("refuses %s %s, which the app doesn't use", async (method, path) => {
+    const t = setupConvex();
+
+    const response = await t.fetch(path, {
+      method,
+      headers: { "content-type": "application/json", origin: SITE_URL },
+      ...(method === "POST" ? { body: "{}" } : {}),
+    });
+
+    expect(response.status).toBe(404);
+  });
+
+  it.each(["/api/auth/get-session", "/api/auth/convex/jwks"])(
+    "still serves %s, which the client needs",
+    async (path) => {
+      const t = setupConvex();
+
+      const response = await t.fetch(path, { headers: { origin: SITE_URL } });
+
+      expect(response.status).toBe(200);
+    },
+  );
+
   it("keeps public sign-up closed", async () => {
     const t = setupConvex();
 
@@ -107,7 +158,7 @@ describe("sign-in", () => {
       body: JSON.stringify({ name: "Eve", email: "eve@example.com", password: "a-long-secret-1" }),
     });
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(404);
     const users = await t.run(
       async (ctx): Promise<{ page: unknown[] }> =>
         await ctx.runQuery(components.betterAuth.adapter.findMany, {
