@@ -61,3 +61,19 @@ export async function changeOwnPassword(
   }
   return true;
 }
+
+/** Replaces a user's credential password (hashed, like at creation). */
+export async function setCredentialPassword(
+  ctx: MutationCtx,
+  authUserId: string,
+  password: string,
+) {
+  const auth = await createAuth(ctx).$context;
+  await auth.internalAdapter.updatePassword(authUserId, await auth.password.hash(password));
+}
+
+/** Signs a user out everywhere. */
+export async function revokeAllSessions(ctx: MutationCtx, authUserId: string) {
+  const auth = await createAuth(ctx).$context;
+  await auth.internalAdapter.deleteUserSessions(authUserId);
+}

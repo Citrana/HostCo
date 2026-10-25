@@ -34,6 +34,8 @@ export const textPairs: ReadonlyArray<readonly [ColorToken, ColorToken]> = [
   ["on-primary", "primary"],
   ["on-primary", "primary-hover"],
   ["badge-green", "badge-green-soft"],
+  // Confirmations ("saved", "copied") on cards.
+  ["badge-green", "surface"],
   ["badge-amber", "badge-amber-soft"],
 ];
 

@@ -29,6 +29,7 @@ export function TextField({
   error,
   hint,
   autoComplete,
+  readOnly,
 }: {
   id: string;
   label: string;
@@ -38,6 +39,7 @@ export function TextField({
   error?: string;
   hint?: string;
   autoComplete?: string;
+  readOnly?: boolean;
 }) {
   const hintId = `${id}-hint`;
   const errorId = `${id}-error`;
@@ -54,16 +56,66 @@ export function TextField({
         type={type}
         value={value}
         autoComplete={autoComplete}
+        readOnly={readOnly}
         onChange={(event) => onChange(event.target.value)}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy || undefined}
-        className="h-12 rounded-field border border-border-strong bg-surface px-4 text-base text-ink outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary"
+        className="h-12 rounded-field border border-border-strong bg-surface px-4 text-base text-ink outline-none read-only:bg-canvas focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary"
       />
       {hint && (
         <p id={hintId} className="text-sm text-muted">
           {hint}
         </p>
       )}
+      {error && (
+        <p id={errorId} className="text-sm font-medium text-ink">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+export function SelectField({
+  id,
+  label,
+  value,
+  onChange,
+  placeholder,
+  options,
+  error,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  options: { value: string; label: string }[];
+  error?: string;
+}) {
+  const errorId = `${id}-error`;
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={id} className="text-sm font-medium text-ink">
+        {label}
+      </label>
+      <select
+        id={id}
+        name={id}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
+        className="h-12 rounded-field border border-border-strong bg-surface px-4 text-base text-ink outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary"
+      >
+        <option value="">{placeholder}</option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
       {error && (
         <p id={errorId} className="text-sm font-medium text-ink">
           {error}

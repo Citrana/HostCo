@@ -33,17 +33,21 @@ export async function createUser(
     isSystem?: boolean;
     status?: "active" | "disabled";
     mustChangePassword?: boolean;
+    /** Share an existing role instead of creating one for this user. */
+    roleId?: Id<"roles">;
   } = {},
 ) {
   nextUser += 1;
   const authUserId = `auth-user-${nextUser}`;
   const { roleId, userId } = await t.run(async (ctx) => {
-    const roleId = await ctx.db.insert("roles", {
-      key: null,
-      name: { fr: `Rôle ${nextUser}`, en: `Role ${nextUser}` },
-      permissions: options.permissions ?? [],
-      isSystem: options.isSystem ?? false,
-    });
+    const roleId =
+      options.roleId ??
+      (await ctx.db.insert("roles", {
+        key: null,
+        name: { fr: `Rôle ${nextUser}`, en: `Role ${nextUser}` },
+        permissions: options.permissions ?? [],
+        isSystem: options.isSystem ?? false,
+      }));
     const userId = await ctx.db.insert("users", {
       authUserId,
       name: `User ${nextUser}`,
@@ -59,8 +63,28 @@ export async function createUser(
   return {
     roleId,
     userId,
+    authUserId,
     as: t.withIdentity({ subject: authUserId }),
   };
+}
+
+/** Every app and auth document, serialized, to check what is stored. */
+export async function storedDocuments(t: TestConvex) {
+  return await t.run(async (ctx) => {
+    const appDocs = [
+      ...(await ctx.db.query("users").collect()),
+      ...(await ctx.db.query("roles").collect()),
+    ];
+    const authDocs = [];
+    for (const model of ["user", "account", "session"] as const) {
+      const result: { page: unknown[] } = await ctx.runQuery(
+        components.betterAuth.adapter.findMany,
+        { model, paginationOpts: { numItems: 100, cursor: null } },
+      );
+      authDocs.push(...result.page);
+    }
+    return JSON.stringify([appDocs, authDocs]);
+  });
 }
 
 export async function expectErrorCode(promise: Promise<unknown>, code: ErrorCode) {

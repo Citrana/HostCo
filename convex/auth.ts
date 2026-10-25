@@ -79,19 +79,19 @@ export const createAuth = (ctx: GenericCtx<DataModel>) =>
         if (hookCtx.path !== SIGN_IN_PATH) return;
         const key = signInLimitKey(hookCtx.body?.email);
         if (key === null) return;
-        const allowed: boolean = await requireActionCtx(ctx).runQuery(
-          internal.rateLimits.signInAllowed,
+        const allowed: boolean = await requireActionCtx(ctx).runMutation(
+          internal.rateLimits.takeSignInAttempt,
           { key },
         );
         if (!allowed) throw authError("TOO_MANY_REQUESTS", "TOO_MANY_ATTEMPTS");
       }),
       after: createAuthMiddleware(async (hookCtx) => {
         if (hookCtx.path !== SIGN_IN_PATH) return;
-        const returned = hookCtx.context.returned;
-        if (!isAPIError(returned) || returned.body?.code !== "INVALID_EMAIL_OR_PASSWORD") return;
+        // Any failure keeps the attempt it took; only a session gives them back.
+        if (isAPIError(hookCtx.context.returned)) return;
         const key = signInLimitKey(hookCtx.body?.email);
         if (key === null) return;
-        await requireActionCtx(ctx).runMutation(internal.rateLimits.recordFailedSignIn, { key });
+        await requireActionCtx(ctx).runMutation(internal.rateLimits.clearSignInAttempts, { key });
       }),
     },
     databaseHooks: {

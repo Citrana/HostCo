@@ -20,6 +20,8 @@
     "ROLE_IN_USE": "This role is assigned to users. Change their role first.",
     "ROLE_INVALID": "The role name is required in French and English (60 characters max).",
     "SYSTEM_ROLE_LOCKED": "The Super Admin role can’t be edited or deleted.",
+    "USER_NOT_FOUND": "This user doesn’t exist or was deleted.",
+    "LAST_SUPER_ADMIN": "At least one active Super Admin must remain.",
     "INVALID_CREDENTIALS": "Incorrect email or password.",
     "PIN_EXPIRED": "This PIN has expired. Ask an administrator for a new one.",
     "TOO_MANY_ATTEMPTS": "Too many attempts. Try again in 15 minutes.",
@@ -66,12 +68,162 @@
       "mismatch": "The two passwords don’t match.",
       "submit": "Save the password",
       "submitting": "Saving…"
+    }
+  },
+  "Admin": {
+    "brand": "hostco",
+    "skipToContent": "Skip to main content",
+    "loading": "Loading…",
+    "back": "Back",
+    "nav": {
+      "label": "Team area navigation",
+      "home": "Home",
+      "users": "Users",
+      "roles": "Roles"
     },
-    "Admin": {
+    "accountMenu": {
+      "label": "Account menu",
+      "signOut": "Sign out"
+    },
+    "noAccess": {
+      "title": "Access denied",
+      "body": "Your role doesn’t allow you to see this page."
+    },
+    "Error": {
+      "title": "This page couldn’t be shown",
+      "retry": "Try again"
+    },
+    "Home": {
       "metaTitle": "Team area",
       "welcome": "Welcome, {name}",
       "role": "Role: {role}",
-      "signOut": "Sign out"
+      "intro": "What would you like to do?",
+      "users": "Manage team accounts, their roles and their PINs.",
+      "roles": "Decide what each role can do on the platform."
+    },
+    "Users": {
+      "metaTitle": "Users",
+      "title": "Users",
+      "new": "New user",
+      "empty": "No users yet.",
+      "columns": {
+        "name": "Name",
+        "role": "Role",
+        "status": "Status"
+      },
+      "status": {
+        "active": "Active",
+        "disabled": "Disabled",
+        "pinPending": "PIN to replace"
+      },
+      "noRole": "No role"
+    },
+    "UserNew": {
+      "metaTitle": "New user",
+      "title": "New user",
+      "intro": "A one-time PIN will be generated. The person must replace it with their own password within 72 hours.",
+      "back": "Back to users",
+      "submit": "Create the user",
+      "submitting": "Creating…"
+    },
+    "UserForm": {
+      "name": "Full name",
+      "email": "Email address",
+      "role": "Role",
+      "rolePlaceholder": "Choose a role"
+    },
+    "UserDetail": {
+      "metaTitle": "User",
+      "back": "Back to users",
+      "notFound": "This user doesn’t exist or was deleted.",
+      "profile": "Profile",
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Changes saved.",
+      "self": "This is your account. You can’t change its access or generate your own PIN.",
+      "access": "Access",
+      "pinExpires": "PIN to replace before {date}.",
+      "disable": "Disable the account",
+      "disableHint": "The person is signed out at once and can no longer sign in.",
+      "enable": "Enable the account",
+      "resetPin": "Generate a new PIN",
+      "resetPinHint": "For a forgotten password. The old password stops working and the person is signed out everywhere.",
+      "resetPinConfirm": "Confirm and generate",
+      "cancel": "Cancel",
+      "working": "Working…",
+      "changeOwnPassword": "Change my password"
+    },
+    "Pin": {
+      "title": "One-time PIN",
+      "intro": "Give this PIN to {name} in person or over a safe channel. It will never be shown again.",
+      "label": "PIN",
+      "copy": "Copy the PIN",
+      "copied": "PIN copied.",
+      "copyFailed": "Copying failed. Write the PIN down instead.",
+      "done": "I’ve passed on the PIN"
+    },
+    "Roles": {
+      "metaTitle": "Roles",
+      "title": "Roles",
+      "new": "New role",
+      "columns": {
+        "name": "Name",
+        "permissions": "Permissions"
+      },
+      "system": "Locked",
+      "permissionCount": "{count, plural, =0 {No permissions} one {# permission} other {# permissions}}"
+    },
+    "RoleForm": {
+      "newMetaTitle": "New role",
+      "editMetaTitle": "Edit role",
+      "newTitle": "New role",
+      "back": "Back to roles",
+      "notFound": "This role doesn’t exist or was deleted.",
+      "nameFr": "Name in French",
+      "nameEn": "Name in English",
+      "nameHint": "60 characters max.",
+      "permissions": "Permissions",
+      "permissionsHint": "You can only grant permissions that your own role holds.",
+      "create": "Create the role",
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Changes saved.",
+      "delete": "Delete the role",
+      "deleteConfirm": "Confirm deletion",
+      "cancel": "Cancel",
+      "locked": "The Super Admin role holds every permission. It can’t be edited or deleted.",
+      "ownRole": "This is your own role: another admin has to edit it.",
+      "aboveLevel": "This role grants permissions your own role doesn’t hold. Only an admin who holds them can edit it."
+    },
+    "PermissionGroups": {
+      "property": "Properties",
+      "user": "Users",
+      "role": "Roles",
+      "location": "Locations"
+    },
+    "Permissions": {
+      "property": {
+        "create": "Create properties",
+        "update": {
+          "own": "Edit their own properties",
+          "any": "Edit any property"
+        },
+        "delete": "Delete properties",
+        "publish": "Publish, unpublish and close properties",
+        "view": {
+          "any": "See every property, drafts included"
+        }
+      },
+      "user": {
+        "view": "See users",
+        "manage": "Create and manage users"
+      },
+      "role": {
+        "manage": "Manage roles"
+      },
+      "location": {
+        "manage": "Manage provinces and cities"
+      }
     }
   }
 }

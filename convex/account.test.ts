@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { api } from "./_generated/api";
+import { PERMISSIONS } from "./lib/permissions";
 import {
   createAccount,
   createUser,
@@ -23,6 +24,26 @@ describe("account.me", () => {
     const role = await t.run((ctx) => ctx.db.get("roles", roleId));
     expect(me).toMatchObject({ mustChangePassword: false, roleName: role?.name });
     expect(me?.email).toMatch(/@example\.com$/);
+  });
+
+  it("returns the user's id and the permissions their role grants", async () => {
+    const t = setupConvex();
+    const { as, userId, roleId } = await createUser(t, {
+      permissions: ["user.view", "role.manage"],
+    });
+
+    const me = await as.query(api.account.me, {});
+
+    expect(me).toMatchObject({ id: userId, roleId, permissions: ["user.view", "role.manage"] });
+  });
+
+  it("gives a Super Admin every permission", async () => {
+    const t = setupConvex();
+    const { as } = await createUser(t, { isSystem: true });
+
+    const me = await as.query(api.account.me, {});
+
+    expect(me?.permissions).toEqual([...PERMISSIONS]);
   });
 
   it("still answers while the user must change their password", async () => {

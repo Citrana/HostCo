@@ -3,6 +3,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx } from "./_generated/server";
 import { appError } from "./lib/errors";
 import {
+  canGrant,
   permissionValidator,
   requireAnyPermission,
   requirePermission,
@@ -13,6 +14,9 @@ import { localized } from "./schema";
 const MAX_NAME_LENGTH = 60;
 // Roles are a short admin-managed list; this only bounds the read.
 const MAX_ROLES = 200;
+
+// Picking a role for a user needs the list, as does managing roles.
+const ROLE_READERS = ["user.view", "user.manage", "role.manage"] as const;
 
 const roleFields = {
   name: localized,
@@ -28,12 +32,8 @@ function cleanRole(args: { name: { fr: string; en: string }; permissions: Permis
   return { name, permissions: [...new Set(args.permissions)] };
 }
 
-// Without this, `role.manage` would be a path to every other permission.
 function assertCanGrant(callerRole: Doc<"roles">, permissions: readonly Permission[]) {
-  if (callerRole.isSystem) return;
-  if (!permissions.every((permission) => callerRole.permissions.includes(permission))) {
-    throw appError("FORBIDDEN");
-  }
+  if (!canGrant(callerRole, permissions)) throw appError("FORBIDDEN");
 }
 
 async function getEditableRole(ctx: MutationCtx, id: Id<"roles">, callerRole: Doc<"roles">) {
@@ -42,22 +42,27 @@ async function getEditableRole(ctx: MutationCtx, id: Id<"roles">, callerRole: Do
   if (role.isSystem) throw appError("SYSTEM_ROLE_LOCKED");
   // Nobody widens or deletes the role they act with.
   if (role._id === callerRole._id) throw appError("FORBIDDEN");
+  // Nor rewrites a role above their own level, which would demote its holders.
+  assertCanGrant(callerRole, role.permissions);
   return role;
 }
 
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    await requireAnyPermission(ctx, ["user.view", "role.manage"]);
+    await requireAnyPermission(ctx, ROLE_READERS);
     return await ctx.db.query("roles").take(MAX_ROLES);
   },
 });
 
 export const get = query({
-  args: { id: v.id("roles") },
+  // A string, not v.id: the id comes from the URL, and a malformed one should
+  // read as "not found" rather than fail the page.
+  args: { id: v.string() },
   handler: async (ctx, args) => {
-    await requireAnyPermission(ctx, ["user.view", "role.manage"]);
-    return await ctx.db.get("roles", args.id);
+    await requireAnyPermission(ctx, ROLE_READERS);
+    const id = ctx.db.normalizeId("roles", args.id);
+    return id === null ? null : await ctx.db.get("roles", id);
   },
 });
 

@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { AdminHome } from "@/components/admin/admin-home";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("Auth.Admin");
+  const t = await getTranslations("Admin.Home");
   return { title: t("metaTitle") };
 }
 

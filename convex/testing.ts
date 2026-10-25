@@ -1,9 +1,5 @@
-import { v } from "convex/values";
 import { components } from "./_generated/api";
 import { internalMutation } from "./_generated/server";
-import { createCredentialUser } from "./lib/accounts";
-import { generatePin, PIN_TTL_MS } from "./lib/pin";
-import { ensureDefaultRoles } from "./seed";
 
 function requireTestDeployment(name: string) {
   if (process.env.IS_TEST !== "true") {
@@ -41,31 +37,3 @@ export const reset = internalMutation({
   },
 });
 
-/**
- * Creates a user with a fresh one-time PIN and returns the PIN, the way PR 4's
- * admin "create user" will. Lets e2e cover the PIN flow before that UI exists.
- */
-export const createPinUser = internalMutation({
-  args: { email: v.string() },
-  handler: async (ctx, args) => {
-    requireTestDeployment("createPinUser");
-    const roleId = await ensureDefaultRoles(ctx);
-    const pin = generatePin();
-    const authUserId = await createCredentialUser(ctx, {
-      name: "PIN User",
-      email: args.email,
-      password: pin,
-    });
-    await ctx.db.insert("users", {
-      authUserId,
-      name: "PIN User",
-      email: args.email,
-      roleId,
-      status: "active",
-      mustChangePassword: true,
-      pinExpiresAt: Date.now() + PIN_TTL_MS,
-      createdBy: null,
-    });
-    return { pin };
-  },
-});

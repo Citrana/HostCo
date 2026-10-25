@@ -3,7 +3,7 @@ import { internalQuery, mutation, query } from "./_generated/server";
 import { changeOwnPassword } from "./lib/accounts";
 import { appError } from "./lib/errors";
 import { passwordProblem } from "./lib/password";
-import { getCurrentUser, requireUser } from "./lib/permissions";
+import { effectivePermissions, getCurrentUser, requireUser } from "./lib/permissions";
 import { signInBlockReason } from "./lib/pin";
 import { rateLimiter } from "./rateLimits";
 
@@ -19,10 +19,14 @@ export const me = query({
     if (user === null || user.status === "disabled") return null;
     const role = await ctx.db.get("roles", user.roleId);
     return {
+      id: user._id,
+      roleId: user.roleId,
       name: user.name,
       email: user.email,
       roleName: role?.name ?? null,
       mustChangePassword: user.mustChangePassword,
+      // For showing only what the user may do; Convex still checks every call.
+      permissions: role === null ? [] : effectivePermissions(role),
     };
   },
 });
