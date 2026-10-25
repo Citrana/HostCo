@@ -1,7 +1,6 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
 import { expect } from "vitest";
-import type { Id } from "./_generated/dataModel";
 import type { ErrorCode } from "./lib/errors";
 import type { Permission } from "./lib/permissions";
 import schema from "./schema";
@@ -48,8 +47,8 @@ export async function createUser(
     return { roleId, userId };
   });
   return {
-    roleId: roleId as Id<"roles">,
-    userId: userId as Id<"users">,
+    roleId,
+    userId,
     as: t.withIdentity({ subject: authUserId }),
   };
 }

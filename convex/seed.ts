@@ -64,9 +64,10 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
 ];
 
 /**
- * Creates the default roles that are missing. Seeded roles that already exist
- * keep any edits an admin made, except the system role, which always gets
- * every permission back.
+ * Creates the default roles that are missing, so a default role an admin
+ * deleted comes back on the next run. Seeded roles that already exist keep any
+ * edits an admin made, except the system role, which always gets every
+ * permission back.
  */
 export const seedRoles = internalMutation({
   args: {},
