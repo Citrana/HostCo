@@ -8,6 +8,7 @@ import { isEmail, normalizeEmail } from "@/convex/lib/email";
 import { passwordProblem } from "@/convex/lib/password";
 import { useRouter } from "@/i18n/navigation";
 import { useAuthClient } from "@/lib/auth/client";
+import { useOpenPage } from "@/lib/navigation/open-page";
 import { toErrorCode, type ClientErrorCode } from "@/lib/auth/errors";
 import { AuthCard, FormError, SubmitButton, TextField } from "./form-parts";
 
@@ -18,6 +19,7 @@ export function SetupForm() {
   const tErrors = useTranslations("Errors");
   const auth = useAuthClient();
   const router = useRouter();
+  const openPage = useOpenPage();
   const status = useQuery(api.setup.status, {});
   const bootstrap = useMutation(api.setup.bootstrapSuperAdmin);
   const [name, setName] = useState("");
@@ -57,7 +59,8 @@ export function SetupForm() {
       return;
     }
     const signedIn = await auth.signIn(normalized, password);
-    router.replace(signedIn.ok ? "/admin" : "/sign-in");
+    if (signedIn.ok) openPage("/admin");
+    else router.replace("/sign-in");
   }
 
   const card = (body: React.ReactNode) => (

@@ -5,6 +5,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeAuthClient, LOCALES, renderWithAuth } from "./test-utils";
 
 const replace = vi.hoisted(() => vi.fn());
+const openPage = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/navigation/open-page", () => ({ useOpenPage: () => openPage }));
 const useQuery = vi.hoisted(() => vi.fn());
 const bootstrap = vi.hoisted(() => vi.fn());
 vi.mock("@/i18n/navigation", () => ({ useRouter: () => ({ replace }) }));
@@ -17,6 +19,7 @@ describe.each(LOCALES)("SetupForm (%s)", (locale, messages) => {
 
   beforeEach(() => {
     replace.mockReset();
+    openPage.mockReset();
     bootstrap.mockReset().mockResolvedValue(null);
     useQuery.mockReturnValue({ needed: true });
   });
@@ -65,7 +68,9 @@ describe.each(LOCALES)("SetupForm (%s)", (locale, messages) => {
       email: "amani@example.com",
       password: "a-long-secret-1",
     });
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin"));
+    // A full page load, so the auth provider starts from the new session.
+    await waitFor(() => expect(openPage).toHaveBeenCalledWith("/admin"));
+    expect(replace).not.toHaveBeenCalled();
     expect(auth.signIn).toHaveBeenCalledWith("amani@example.com", "a-long-secret-1");
   });
 

@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeAuthClient, LOCALES, renderWithAuth } from "./test-utils";
 
 const replace = vi.hoisted(() => vi.fn());
+const openPage = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/navigation/open-page", () => ({ useOpenPage: () => openPage }));
 vi.mock("@/i18n/navigation", () => ({ useRouter: () => ({ replace }) }));
 
 const { SignInForm } = await import("./sign-in-form");
@@ -11,7 +13,10 @@ const { SignInForm } = await import("./sign-in-form");
 describe.each(LOCALES)("SignInForm (%s)", (locale, messages) => {
   const t = messages.Auth;
 
-  beforeEach(() => replace.mockReset());
+  beforeEach(() => {
+    replace.mockReset();
+    openPage.mockReset();
+  });
 
   it("asks for both fields before calling the server", async () => {
     const auth = fakeAuthClient();
@@ -43,7 +48,9 @@ describe.each(LOCALES)("SignInForm (%s)", (locale, messages) => {
     await userEvent.click(screen.getByRole("button", { name: t.SignIn.submit }));
 
     expect(auth.signIn).toHaveBeenCalledWith("amani@example.com", "12345678");
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin"));
+    // A full page load, so the auth provider starts from the new session.
+    await waitFor(() => expect(openPage).toHaveBeenCalledWith("/admin"));
+    expect(replace).not.toHaveBeenCalled();
   });
 
   it("shows the server's error in the current language", async () => {
@@ -58,5 +65,6 @@ describe.each(LOCALES)("SignInForm (%s)", (locale, messages) => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent(messages.Errors.PIN_EXPIRED);
     expect(replace).not.toHaveBeenCalled();
+    expect(openPage).not.toHaveBeenCalled();
   });
 });

@@ -3,9 +3,9 @@
 import { useTranslations } from "next-intl";
 import { useState, type FormEvent } from "react";
 import { isEmail, normalizeEmail } from "@/convex/lib/email";
-import { useRouter } from "@/i18n/navigation";
 import { useAuthClient } from "@/lib/auth/client";
 import type { ClientErrorCode } from "@/lib/auth/errors";
+import { useOpenPage } from "@/lib/navigation/open-page";
 import { AuthCard, FormError, SubmitButton, TextField } from "./form-parts";
 
 type FieldErrors = { email?: string; secret?: string };
@@ -14,7 +14,7 @@ export function SignInForm() {
   const t = useTranslations("Auth");
   const tErrors = useTranslations("Errors");
   const auth = useAuthClient();
-  const router = useRouter();
+  const openPage = useOpenPage();
   const [email, setEmail] = useState("");
   const [secret, setSecret] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -35,7 +35,7 @@ export function SignInForm() {
     setPending(true);
     const result = await auth.signIn(normalized, secret);
     if (result.ok) {
-      router.replace("/admin");
+      openPage("/admin");
       return;
     }
     setError(result.code);
