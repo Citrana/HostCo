@@ -1,4 +1,5 @@
-import { internalMutation } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
+import { internalMutation, type MutationCtx } from "./_generated/server";
 import { PERMISSIONS, type Permission } from "./lib/permissions";
 
 type DefaultRole = {
@@ -64,24 +65,35 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
 ];
 
 /**
- * Creates the default roles that are missing. Seeded roles that already exist
- * keep any edits an admin made, except the system role, which always gets
- * every permission back.
+ * Creates the default roles that are missing, so a default role an admin
+ * deleted comes back on the next run. Seeded roles that already exist keep any
+ * edits an admin made, except the system role, which always gets every
+ * permission back. Returns the system role's id.
  */
+export async function ensureDefaultRoles(ctx: MutationCtx): Promise<Id<"roles">> {
+  let systemRoleId: Id<"roles"> | null = null;
+  for (const role of DEFAULT_ROLES) {
+    const existing = await ctx.db
+      .query("roles")
+      .withIndex("by_key", (q) => q.eq("key", role.key))
+      .unique();
+    let id: Id<"roles">;
+    if (existing === null) {
+      id = await ctx.db.insert("roles", { ...role, permissions: [...role.permissions] });
+    } else {
+      id = existing._id;
+      if (existing.isSystem) await ctx.db.patch("roles", id, { permissions: [...PERMISSIONS] });
+    }
+    if (role.isSystem) systemRoleId = id;
+  }
+  if (systemRoleId === null) throw new Error("DEFAULT_ROLES has no system role");
+  return systemRoleId;
+}
+
 export const seedRoles = internalMutation({
   args: {},
   handler: async (ctx) => {
-    for (const role of DEFAULT_ROLES) {
-      const existing = await ctx.db
-        .query("roles")
-        .withIndex("by_key", (q) => q.eq("key", role.key))
-        .unique();
-      if (existing === null) {
-        await ctx.db.insert("roles", { ...role, permissions: [...role.permissions] });
-      } else if (existing.isSystem) {
-        await ctx.db.patch("roles", existing._id, { permissions: [...PERMISSIONS] });
-      }
-    }
+    await ensureDefaultRoles(ctx);
     return null;
   },
 });

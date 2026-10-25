@@ -4,6 +4,7 @@ import { locale as rootLocale } from "next/root-params";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations } from "next-intl/server";
+import { AppProviders } from "@/components/app-providers";
 import { routing } from "@/i18n/routing";
 import "../globals.css";
 
@@ -42,7 +43,9 @@ export default async function RootLayout({
       className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-canvas font-sans text-ink">
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider>
+          <AppProviders>{children}</AppProviders>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

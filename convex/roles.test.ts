@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { api } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
 import { createUser, expectErrorCode, setupConvex } from "./test.helpers";
 
 const name = { fr: "Rédacteur", en: "Writer" };
@@ -9,14 +8,14 @@ async function insertRole(
   t: ReturnType<typeof setupConvex>,
   overrides: { isSystem?: boolean; key?: string | null } = {},
 ) {
-  return (await t.run((ctx) =>
+  return await t.run((ctx) =>
     ctx.db.insert("roles", {
       key: overrides.key ?? null,
       name,
       permissions: ["property.create"],
       isSystem: overrides.isSystem ?? false,
     }),
-  )) as Id<"roles">;
+  );
 }
 
 describe("roles.list", () => {
@@ -65,7 +64,7 @@ describe("roles.get", () => {
     const t = setupConvex();
     const { as } = await createUser(t, { permissions: ["role.manage"] });
     const id = await insertRole(t);
-    await t.run((ctx) => ctx.db.delete(id));
+    await t.run((ctx) => ctx.db.delete("roles", id));
 
     await expect(as.query(api.roles.get, { id })).resolves.toBeNull();
   });
@@ -89,14 +88,16 @@ describe("roles.get", () => {
 describe("roles.create", () => {
   it("creates a custom role with trimmed names and unique permissions", async () => {
     const t = setupConvex();
-    const { as } = await createUser(t, { permissions: ["role.manage"] });
+    const { as } = await createUser(t, {
+      permissions: ["role.manage", "property.create", "property.update.own"],
+    });
 
     const id = await as.mutation(api.roles.create, {
       name: { fr: "  Rédacteur ", en: " Writer  " },
       permissions: ["property.create", "property.update.own", "property.create"],
     });
 
-    const role = await t.run((ctx) => ctx.db.get(id));
+    const role = await t.run((ctx) => ctx.db.get("roles", id));
     expect(role).toMatchObject({
       key: null,
       name,
@@ -145,6 +146,26 @@ describe("roles.create", () => {
     ).rejects.toThrow(/Validator error/);
   });
 
+  it("refuses to grant a permission the caller doesn't hold", async () => {
+    const t = setupConvex();
+    const { as } = await createUser(t, { permissions: ["role.manage"] });
+
+    await expectErrorCode(
+      as.mutation(api.roles.create, { name, permissions: ["user.manage"] }),
+      "FORBIDDEN",
+    );
+  });
+
+  it("lets the system role grant any permission", async () => {
+    const t = setupConvex();
+    const { as } = await createUser(t, { permissions: [], isSystem: true });
+
+    const id = await as.mutation(api.roles.create, { name, permissions: ["user.manage"] });
+
+    const role = await t.run((ctx) => ctx.db.get("roles", id));
+    expect(role?.permissions).toEqual(["user.manage"]);
+  });
+
   it("is forbidden without role.manage", async () => {
     const t = setupConvex();
     const { as } = await createUser(t, { permissions: ["user.view", "user.manage"] });
@@ -167,18 +188,38 @@ describe("roles.update", () => {
 
   it("updates the name and permissions of a custom role", async () => {
     const t = setupConvex();
-    const { as } = await createUser(t, { permissions: ["role.manage"] });
+    const { as } = await createUser(t, { permissions: ["role.manage", "property.publish"] });
     const id = await insertRole(t, { key: "contentManager" });
 
     await as.mutation(api.roles.update, { id, ...changes });
 
-    const role = await t.run((ctx) => ctx.db.get(id));
+    const role = await t.run((ctx) => ctx.db.get("roles", id));
     expect(role).toMatchObject({
       key: "contentManager",
       name: { fr: "Relecteur", en: "Reviewer" },
       permissions: ["property.publish"],
       isSystem: false,
     });
+  });
+
+  it("refuses to grant a permission the caller doesn't hold", async () => {
+    const t = setupConvex();
+    const { as } = await createUser(t, { permissions: ["role.manage"] });
+    const id = await insertRole(t);
+
+    await expectErrorCode(as.mutation(api.roles.update, { id, ...changes }), "FORBIDDEN");
+    const role = await t.run((ctx) => ctx.db.get("roles", id));
+    expect(role?.permissions).toEqual(["property.create"]);
+  });
+
+  it("refuses to let a user edit their own role", async () => {
+    const t = setupConvex();
+    const { as, roleId } = await createUser(t, { permissions: ["role.manage"] });
+
+    await expectErrorCode(
+      as.mutation(api.roles.update, { id: roleId, name, permissions: ["role.manage"] }),
+      "FORBIDDEN",
+    );
   });
 
   it("refuses to edit the system role", async () => {
@@ -193,7 +234,7 @@ describe("roles.update", () => {
     const t = setupConvex();
     const { as } = await createUser(t, { permissions: ["role.manage"] });
     const id = await insertRole(t);
-    await t.run((ctx) => ctx.db.delete(id));
+    await t.run((ctx) => ctx.db.delete("roles", id));
 
     await expectErrorCode(as.mutation(api.roles.update, { id, ...changes }), "ROLE_NOT_FOUND");
   });
@@ -233,15 +274,23 @@ describe("roles.remove", () => {
 
     await as.mutation(api.roles.remove, { id });
 
-    await expect(t.run((ctx) => ctx.db.get(id))).resolves.toBeNull();
+    await expect(t.run((ctx) => ctx.db.get("roles", id))).resolves.toBeNull();
   });
 
   it("refuses to delete a role that a user still has", async () => {
     const t = setupConvex();
-    const { as, roleId } = await createUser(t, { permissions: ["role.manage"] });
+    const { as } = await createUser(t, { permissions: ["role.manage"] });
+    const { roleId } = await createUser(t, { permissions: ["user.view"] });
 
     await expectErrorCode(as.mutation(api.roles.remove, { id: roleId }), "ROLE_IN_USE");
-    await expect(t.run((ctx) => ctx.db.get(roleId))).resolves.not.toBeNull();
+    await expect(t.run((ctx) => ctx.db.get("roles", roleId))).resolves.not.toBeNull();
+  });
+
+  it("refuses to let a user delete their own role", async () => {
+    const t = setupConvex();
+    const { as, roleId } = await createUser(t, { permissions: ["role.manage"] });
+
+    await expectErrorCode(as.mutation(api.roles.remove, { id: roleId }), "FORBIDDEN");
   });
 
   it("refuses to delete the system role", async () => {
@@ -256,7 +305,7 @@ describe("roles.remove", () => {
     const t = setupConvex();
     const { as } = await createUser(t, { permissions: ["role.manage"] });
     const id = await insertRole(t);
-    await t.run((ctx) => ctx.db.delete(id));
+    await t.run((ctx) => ctx.db.delete("roles", id));
 
     await expectErrorCode(as.mutation(api.roles.remove, { id }), "ROLE_NOT_FOUND");
   });

@@ -23,6 +23,28 @@ export const permissionValidator = v.union(
   ...PERMISSIONS.map((permission) => v.literal(permission)),
 );
 
+/** The caller's profile, whatever its status, or null when signed out. */
+export async function getCurrentUser(ctx: QueryCtx): Promise<Doc<"users"> | null> {
+  const authUserId = await getAuthUserId(ctx);
+  if (authUserId === null) return null;
+  return await ctx.db
+    .query("users")
+    .withIndex("by_authUserId", (q) => q.eq("authUserId", authUserId))
+    .unique();
+}
+
+/**
+ * Resolves the caller's active profile from the server-side identity. Unlike
+ * `requirePermission`, it lets through users who must still change their
+ * password, so the change-password flow can use it.
+ */
+export async function requireUser(ctx: QueryCtx): Promise<Doc<"users">> {
+  const user = await getCurrentUser(ctx);
+  if (user === null) throw appError("UNAUTHENTICATED");
+  if (user.status === "disabled") throw appError("ACCOUNT_DISABLED");
+  return user;
+}
+
 /**
  * Resolves the caller from the server-side identity and checks that their role
  * holds at least one of `permissions`. Never trust a user id passed in args.
@@ -31,15 +53,7 @@ export async function requireAnyPermission(
   ctx: QueryCtx,
   permissions: readonly Permission[],
 ): Promise<{ user: Doc<"users">; role: Doc<"roles"> }> {
-  const authUserId = await getAuthUserId(ctx);
-  if (authUserId === null) throw appError("UNAUTHENTICATED");
-
-  const user = await ctx.db
-    .query("users")
-    .withIndex("by_authUserId", (q) => q.eq("authUserId", authUserId))
-    .unique();
-  if (user === null) throw appError("UNAUTHENTICATED");
-  if (user.status === "disabled") throw appError("ACCOUNT_DISABLED");
+  const user = await requireUser(ctx);
   if (user.mustChangePassword) throw appError("PASSWORD_CHANGE_REQUIRED");
 
   const role = await ctx.db.get("roles", user.roleId);

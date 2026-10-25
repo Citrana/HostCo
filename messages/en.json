@@ -19,6 +19,59 @@
     "ROLE_NOT_FOUND": "This role doesn’t exist or was deleted.",
     "ROLE_IN_USE": "This role is assigned to users. Change their role first.",
     "ROLE_INVALID": "The role name is required in French and English (60 characters max).",
-    "SYSTEM_ROLE_LOCKED": "The Super Admin role can’t be edited or deleted."
+    "SYSTEM_ROLE_LOCKED": "The Super Admin role can’t be edited or deleted.",
+    "INVALID_CREDENTIALS": "Incorrect email or password.",
+    "PIN_EXPIRED": "This PIN has expired. Ask an administrator for a new one.",
+    "TOO_MANY_ATTEMPTS": "Too many attempts. Try again in 15 minutes.",
+    "SETUP_ALREADY_DONE": "The platform is already set up. Sign in with your account.",
+    "EMAIL_TAKEN": "An account already uses this email address.",
+    "EMAIL_INVALID": "Enter a valid email address.",
+    "NAME_INVALID": "The name is required (100 characters maximum).",
+    "PASSWORD_TOO_SHORT": "The password must be at least 10 characters long.",
+    "PASSWORD_TOO_LONG": "The password can’t be longer than 128 characters.",
+    "PASSWORD_REUSED": "The new password must be different from the current one.",
+    "UNKNOWN": "Something went wrong. Please try again."
+  },
+  "Auth": {
+    "required": "This field is required.",
+    "loading": "Loading…",
+    "fields": {
+      "name": "Full name",
+      "email": "Email address",
+      "password": "Password",
+      "secret": "Password or PIN",
+      "currentPassword": "Current password or PIN",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm the new password"
+    },
+    "passwordHint": "At least 10 characters.",
+    "SignIn": {
+      "metaTitle": "Sign in",
+      "title": "Sign in to the team area",
+      "intro": "Use your password, or the PIN your administrator gave you if this is your first sign-in.",
+      "submit": "Sign in",
+      "submitting": "Signing in…"
+    },
+    "Setup": {
+      "metaTitle": "Setup",
+      "title": "Create the first admin account",
+      "intro": "This Super Admin account can then create accounts for the team. This page only works once.",
+      "submit": "Create the account",
+      "submitting": "Creating…"
+    },
+    "ChangePassword": {
+      "metaTitle": "New password",
+      "title": "Choose your password",
+      "intro": "To secure your account, replace your PIN with a password of your own.",
+      "mismatch": "The two passwords don’t match.",
+      "submit": "Save the password",
+      "submitting": "Saving…"
+    },
+    "Admin": {
+      "metaTitle": "Team area",
+      "welcome": "Welcome, {name}",
+      "role": "Role: {role}",
+      "signOut": "Sign out"
+    }
   }
 }
