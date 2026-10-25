@@ -18,6 +18,10 @@ function authError(status: "FORBIDDEN" | "TOO_MANY_REQUESTS", code: ErrorCode) {
   return new APIError(status, { code, message: code });
 }
 
+function hasClientIp(request: Request) {
+  return request.headers.get("x-forwarded-for") !== null;
+}
+
 export const createAuth = (ctx: GenericCtx<DataModel>) =>
   betterAuth({
     baseURL: process.env.SITE_URL,
@@ -32,7 +36,14 @@ export const createAuth = (ctx: GenericCtx<DataModel>) =>
     rateLimit: {
       enabled: true,
       storage: "database",
-      customRules: { [SIGN_IN_PATH]: { window: 15 * 60, max: 5 } },
+      // Without a client IP, Better Auth would put every caller in one shared
+      // bucket per path, so one person's failures could lock everyone out.
+      // Skip the per-IP limit then; the per-email limit below still applies.
+      // The more specific key must come first: the first match wins.
+      customRules: {
+        [SIGN_IN_PATH]: (request) => hasClientIp(request) && { window: 15 * 60, max: 5 },
+        "/*": (request, rule) => hasClientIp(request) && rule,
+      },
     },
     hooks: {
       before: createAuthMiddleware(async (hookCtx) => {

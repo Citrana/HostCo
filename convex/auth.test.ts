@@ -83,6 +83,21 @@ describe("sign-in", () => {
     expect(blocked.status).toBe(429);
   });
 
+  it("doesn't put clients without a known IP in one shared bucket", async () => {
+    const t = setupConvex();
+    const accounts = [];
+    for (let i = 0; i < 6; i += 1) accounts.push(await createAccount(t));
+
+    // No x-forwarded-for: Better Auth would otherwise key all of these alike,
+    // and one person's failures would lock everyone out.
+    for (const account of accounts.slice(0, 5)) {
+      await signIn(t, account.email, "wrong-password-1");
+    }
+    const other = await signIn(t, accounts[5].email, accounts[5].password);
+
+    expect(other.status).toBe(200);
+  });
+
   it("keeps public sign-up closed", async () => {
     const t = setupConvex();
 
