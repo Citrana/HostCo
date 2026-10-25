@@ -21,6 +21,8 @@ export const ERROR_CODES = [
   "ROLE_IN_USE",
   "ROLE_INVALID",
   "SYSTEM_ROLE_LOCKED",
+  "USER_NOT_FOUND",
+  "LAST_SUPER_ADMIN",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

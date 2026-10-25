@@ -3,10 +3,9 @@ import { mutation, query } from "./_generated/server";
 import { createCredentialUser } from "./lib/accounts";
 import { isEmail, normalizeEmail } from "./lib/email";
 import { appError } from "./lib/errors";
+import { cleanPersonName } from "./lib/name";
 import { passwordProblem } from "./lib/password";
 import { ensureDefaultRoles } from "./seed";
-
-const MAX_NAME_LENGTH = 100;
 
 /** Public: the setup page is only usable while no user exists. */
 export const status = query({
@@ -27,9 +26,8 @@ export const bootstrapSuperAdmin = mutation({
   handler: async (ctx, args) => {
     if ((await ctx.db.query("users").first()) !== null) throw appError("SETUP_ALREADY_DONE");
 
-    const name = args.name.trim();
+    const name = cleanPersonName(args.name);
     const email = normalizeEmail(args.email);
-    if (name.length === 0 || name.length > MAX_NAME_LENGTH) throw appError("NAME_INVALID");
     if (!isEmail(email)) throw appError("EMAIL_INVALID");
     const problem = passwordProblem(args.password);
     if (problem !== null) throw appError(problem);

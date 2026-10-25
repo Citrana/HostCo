@@ -3,6 +3,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx } from "./_generated/server";
 import { appError } from "./lib/errors";
 import {
+  canGrant,
   permissionValidator,
   requireAnyPermission,
   requirePermission,
@@ -28,12 +29,8 @@ function cleanRole(args: { name: { fr: string; en: string }; permissions: Permis
   return { name, permissions: [...new Set(args.permissions)] };
 }
 
-// Without this, `role.manage` would be a path to every other permission.
 function assertCanGrant(callerRole: Doc<"roles">, permissions: readonly Permission[]) {
-  if (callerRole.isSystem) return;
-  if (!permissions.every((permission) => callerRole.permissions.includes(permission))) {
-    throw appError("FORBIDDEN");
-  }
+  if (!canGrant(callerRole, permissions)) throw appError("FORBIDDEN");
 }
 
 async function getEditableRole(ctx: MutationCtx, id: Id<"roles">, callerRole: Doc<"roles">) {
@@ -54,10 +51,13 @@ export const list = query({
 });
 
 export const get = query({
-  args: { id: v.id("roles") },
+  // A string, not v.id: the id comes from the URL, and a malformed one should
+  // read as "not found" rather than fail the page.
+  args: { id: v.string() },
   handler: async (ctx, args) => {
     await requireAnyPermission(ctx, ["user.view", "role.manage"]);
-    return await ctx.db.get("roles", args.id);
+    const id = ctx.db.normalizeId("roles", args.id);
+    return id === null ? null : await ctx.db.get("roles", id);
   },
 });
 

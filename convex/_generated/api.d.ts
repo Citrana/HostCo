@@ -15,6 +15,7 @@ import type * as lib_accounts from "../lib/accounts.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_email from "../lib/email.js";
 import type * as lib_errors from "../lib/errors.js";
+import type * as lib_name from "../lib/name.js";
 import type * as lib_password from "../lib/password.js";
 import type * as lib_permissions from "../lib/permissions.js";
 import type * as lib_pin from "../lib/pin.js";
@@ -23,6 +24,7 @@ import type * as roles from "../roles.js";
 import type * as seed from "../seed.js";
 import type * as setup from "../setup.js";
 import type * as testing from "../testing.js";
+import type * as users from "../users.js";
 
 import type {
   ApiFromModules,
@@ -38,6 +40,7 @@ declare const fullApi: ApiFromModules<{
   "lib/auth": typeof lib_auth;
   "lib/email": typeof lib_email;
   "lib/errors": typeof lib_errors;
+  "lib/name": typeof lib_name;
   "lib/password": typeof lib_password;
   "lib/permissions": typeof lib_permissions;
   "lib/pin": typeof lib_pin;
@@ -46,6 +49,7 @@ declare const fullApi: ApiFromModules<{
   seed: typeof seed;
   setup: typeof setup;
   testing: typeof testing;
+  users: typeof users;
 }>;
 
 /**

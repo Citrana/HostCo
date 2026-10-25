@@ -23,6 +23,19 @@ export const permissionValidator = v.union(
   ...PERMISSIONS.map((permission) => v.literal(permission)),
 );
 
+/** Every permission the role holds; the system role holds them all. */
+export function effectivePermissions(role: Doc<"roles">): Permission[] {
+  return role.isSystem ? [...PERMISSIONS] : role.permissions;
+}
+
+/**
+ * Whether a holder of `callerRole` may hand out `permissions`. Without this
+ * check, `role.manage` or `user.manage` would be a path to every permission.
+ */
+export function canGrant(callerRole: Doc<"roles">, permissions: readonly Permission[]) {
+  return callerRole.isSystem || permissions.every((p) => callerRole.permissions.includes(p));
+}
+
 /** The caller's profile, whatever its status, or null when signed out. */
 export async function getCurrentUser(ctx: QueryCtx): Promise<Doc<"users"> | null> {
   const authUserId = await getAuthUserId(ctx);

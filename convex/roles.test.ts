@@ -60,6 +60,14 @@ describe("roles.get", () => {
     expect(role).toMatchObject({ _id: id, name });
   });
 
+  // The id comes from the URL, so a typo must not crash the page.
+  it("returns null for a malformed id", async () => {
+    const t = setupConvex();
+    const { as } = await createUser(t, { permissions: ["role.manage"] });
+
+    await expect(as.query(api.roles.get, { id: "not-an-id" })).resolves.toBeNull();
+  });
+
   it("returns null for a role that doesn't exist", async () => {
     const t = setupConvex();
     const { as } = await createUser(t, { permissions: ["role.manage"] });

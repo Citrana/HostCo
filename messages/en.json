@@ -20,6 +20,8 @@
     "ROLE_IN_USE": "This role is assigned to users. Change their role first.",
     "ROLE_INVALID": "The role name is required in French and English (60 characters max).",
     "SYSTEM_ROLE_LOCKED": "The Super Admin role can’t be edited or deleted.",
+    "USER_NOT_FOUND": "This user doesn’t exist or was deleted.",
+    "LAST_SUPER_ADMIN": "At least one active Super Admin must remain.",
     "INVALID_CREDENTIALS": "Incorrect email or password.",
     "PIN_EXPIRED": "This PIN has expired. Ask an administrator for a new one.",
     "TOO_MANY_ATTEMPTS": "Too many attempts. Try again in 15 minutes.",

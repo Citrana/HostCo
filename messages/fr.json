@@ -20,6 +20,8 @@
     "ROLE_IN_USE": "Ce rôle est attribué à des utilisateurs. Changez d’abord leur rôle.",
     "ROLE_INVALID": "Le nom du rôle est obligatoire en français et en anglais (60 caractères maximum).",
     "SYSTEM_ROLE_LOCKED": "Le rôle Super administrateur ne peut être ni modifié ni supprimé.",
+    "USER_NOT_FOUND": "Cet utilisateur n’existe pas ou a été supprimé.",
+    "LAST_SUPER_ADMIN": "Il doit toujours rester au moins un Super administrateur actif.",
     "INVALID_CREDENTIALS": "E-mail ou mot de passe incorrect.",
     "PIN_EXPIRED": "Ce code PIN a expiré. Demandez un nouveau code à un administrateur.",
     "TOO_MANY_ATTEMPTS": "Trop de tentatives. Réessayez dans 15 minutes.",
