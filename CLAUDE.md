@@ -50,6 +50,15 @@ These rules are mandatory. If a request conflicts with them, say so before you a
 - Currency is USD only.
 - Published properties are public and need no login. Everything else is private by default.
 
+## Design
+
+- `docs/design/inspiration.png` is the visual reference for the whole platform: colors, typography, spacing and style. Look at it before building UI.
+- Use the Tailwind tokens defined in `app/globals.css` (e.g. `bg-primary`, `text-muted`, `bg-canvas`, `rounded-card`, `shadow-card`). Never use raw hex values or arbitrary colors. The default Tailwind palette is removed on purpose.
+- Colors: `primary`, `primary-hover`, `primary-soft`, `on-primary`, `surface`, `canvas`, `ink`, `muted`, `border`, `border-strong`, `rating` (star icons only), `badge-green(-soft)`, `badge-amber(-soft)`.
+- To add or change a color, update both `app/globals.css` and `lib/design/tokens.ts`. Add text/background pairs to `textPairs` (4.5:1) or `uiPairs` (3:1). The tests fail if the files drift or a pair misses WCAG AA.
+- Font: Inter (`font-sans`). Type scale: `text-sm` 14, `text-base` 16, `text-xl` 20, `text-2xl` 24, `text-3xl` 32. Cards are white, rounded (`rounded-card`) and softly shadowed on a `canvas` background. Pills and buttons use `rounded-full`.
+- Light theme only for the MVP.
+
 ## General
 
 - pnpm only. Never use npm or yarn.
