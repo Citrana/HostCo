@@ -68,12 +68,161 @@
       "mismatch": "Les deux mots de passe ne correspondent pas.",
       "submit": "Enregistrer le mot de passe",
       "submitting": "Enregistrement…"
+    }
+  },
+  "Admin": {
+    "brand": "hostco",
+    "skipToContent": "Aller au contenu principal",
+    "loading": "Chargement…",
+    "back": "Retour",
+    "nav": {
+      "label": "Navigation de l’espace équipe",
+      "home": "Accueil",
+      "users": "Utilisateurs",
+      "roles": "Rôles"
     },
-    "Admin": {
+    "accountMenu": {
+      "label": "Menu du compte",
+      "signOut": "Se déconnecter"
+    },
+    "noAccess": {
+      "title": "Accès refusé",
+      "body": "Votre rôle ne vous permet pas de voir cette page."
+    },
+    "Error": {
+      "title": "Impossible d’afficher cette page",
+      "retry": "Réessayer"
+    },
+    "Home": {
       "metaTitle": "Espace équipe",
       "welcome": "Bienvenue, {name}",
       "role": "Rôle : {role}",
-      "signOut": "Se déconnecter"
+      "intro": "Que souhaitez-vous faire ?",
+      "users": "Gérer les comptes de l’équipe, leurs rôles et leurs codes PIN.",
+      "roles": "Définir ce que chaque rôle peut faire sur la plateforme."
+    },
+    "Users": {
+      "metaTitle": "Utilisateurs",
+      "title": "Utilisateurs",
+      "new": "Nouvel utilisateur",
+      "empty": "Aucun utilisateur pour l’instant.",
+      "columns": {
+        "name": "Nom",
+        "role": "Rôle",
+        "status": "Statut"
+      },
+      "status": {
+        "active": "Actif",
+        "disabled": "Désactivé",
+        "pinPending": "PIN à remplacer"
+      },
+      "noRole": "Aucun rôle"
+    },
+    "UserNew": {
+      "metaTitle": "Nouvel utilisateur",
+      "title": "Nouvel utilisateur",
+      "intro": "Un code PIN à usage unique sera généré. La personne devra le remplacer par son propre mot de passe dans les 72 heures.",
+      "back": "Retour aux utilisateurs",
+      "submit": "Créer l’utilisateur",
+      "submitting": "Création…"
+    },
+    "UserForm": {
+      "name": "Nom complet",
+      "email": "Adresse e-mail",
+      "role": "Rôle",
+      "rolePlaceholder": "Choisissez un rôle"
+    },
+    "UserDetail": {
+      "metaTitle": "Utilisateur",
+      "back": "Retour aux utilisateurs",
+      "notFound": "Cet utilisateur n’existe pas ou a été supprimé.",
+      "profile": "Profil",
+      "save": "Enregistrer",
+      "saving": "Enregistrement…",
+      "saved": "Modifications enregistrées.",
+      "self": "C’est votre compte. Vous ne pouvez pas modifier son accès ni générer votre propre code PIN.",
+      "access": "Accès",
+      "pinExpires": "Code PIN à remplacer avant le {date}.",
+      "disable": "Désactiver le compte",
+      "disableHint": "La personne est déconnectée immédiatement et ne peut plus se connecter.",
+      "enable": "Réactiver le compte",
+      "resetPin": "Générer un nouveau code PIN",
+      "resetPinHint": "En cas de mot de passe oublié. L’ancien mot de passe cesse de fonctionner et la personne est déconnectée partout.",
+      "resetPinConfirm": "Confirmer la génération",
+      "cancel": "Annuler",
+      "working": "Traitement…",
+      "changeOwnPassword": "Changer mon mot de passe"
+    },
+    "Pin": {
+      "title": "Code PIN à usage unique",
+      "intro": "Transmettez ce code à {name} en personne ou par un canal sûr. Il ne sera plus jamais affiché.",
+      "label": "Code PIN",
+      "copy": "Copier le code",
+      "copied": "Code copié.",
+      "copyFailed": "La copie a échoué. Notez le code à la main.",
+      "done": "J’ai transmis le code"
+    },
+    "Roles": {
+      "metaTitle": "Rôles",
+      "title": "Rôles",
+      "new": "Nouveau rôle",
+      "columns": {
+        "name": "Nom",
+        "permissions": "Autorisations"
+      },
+      "system": "Verrouillé",
+      "permissionCount": "{count, plural, =0 {Aucune autorisation} one {# autorisation} other {# autorisations}}"
+    },
+    "RoleForm": {
+      "newMetaTitle": "Nouveau rôle",
+      "editMetaTitle": "Modifier le rôle",
+      "newTitle": "Nouveau rôle",
+      "back": "Retour aux rôles",
+      "notFound": "Ce rôle n’existe pas ou a été supprimé.",
+      "nameFr": "Nom en français",
+      "nameEn": "Nom en anglais",
+      "nameHint": "60 caractères maximum.",
+      "permissions": "Autorisations",
+      "permissionsHint": "Vous ne pouvez accorder que les autorisations que votre propre rôle détient.",
+      "create": "Créer le rôle",
+      "save": "Enregistrer",
+      "saving": "Enregistrement…",
+      "saved": "Modifications enregistrées.",
+      "delete": "Supprimer le rôle",
+      "deleteConfirm": "Confirmer la suppression",
+      "cancel": "Annuler",
+      "locked": "Le rôle Super administrateur détient toutes les autorisations. Il ne peut être ni modifié ni supprimé.",
+      "ownRole": "C’est votre propre rôle : un autre administrateur doit le modifier."
+    },
+    "PermissionGroups": {
+      "property": "Biens immobiliers",
+      "user": "Utilisateurs",
+      "role": "Rôles",
+      "location": "Lieux"
+    },
+    "Permissions": {
+      "property": {
+        "create": "Créer des biens",
+        "update": {
+          "own": "Modifier ses propres biens",
+          "any": "Modifier tous les biens"
+        },
+        "delete": "Supprimer des biens",
+        "publish": "Publier, dépublier et clôturer des biens",
+        "view": {
+          "any": "Voir tous les biens, brouillons compris"
+        }
+      },
+      "user": {
+        "view": "Voir les utilisateurs",
+        "manage": "Créer et gérer les utilisateurs"
+      },
+      "role": {
+        "manage": "Gérer les rôles"
+      },
+      "location": {
+        "manage": "Gérer les provinces et les villes"
+      }
     }
   }
 }
