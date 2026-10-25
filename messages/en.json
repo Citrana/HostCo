@@ -19,6 +19,17 @@
     "ROLE_NOT_FOUND": "This role doesn’t exist or was deleted.",
     "ROLE_IN_USE": "This role is assigned to users. Change their role first.",
     "ROLE_INVALID": "The role name is required in French and English (60 characters max).",
-    "SYSTEM_ROLE_LOCKED": "The Super Admin role can’t be edited or deleted."
+    "SYSTEM_ROLE_LOCKED": "The Super Admin role can’t be edited or deleted.",
+    "INVALID_CREDENTIALS": "Incorrect email or password.",
+    "PIN_EXPIRED": "This PIN has expired. Ask an administrator for a new one.",
+    "TOO_MANY_ATTEMPTS": "Too many attempts. Try again in 15 minutes.",
+    "SETUP_ALREADY_DONE": "The platform is already set up. Sign in with your account.",
+    "EMAIL_TAKEN": "An account already uses this email address.",
+    "EMAIL_INVALID": "Enter a valid email address.",
+    "NAME_INVALID": "The name is required (100 characters maximum).",
+    "PASSWORD_TOO_SHORT": "The password must be at least 10 characters long.",
+    "PASSWORD_TOO_LONG": "The password can’t be longer than 128 characters.",
+    "PASSWORD_REUSED": "The new password must be different from the current one.",
+    "UNKNOWN": "Something went wrong. Please try again."
   }
 }

@@ -30,7 +30,16 @@ export default defineConfig({
           name: "convex",
           environment: "edge-runtime",
           include: ["convex/**/*.test.ts"],
-          server: { deps: { inline: ["convex-test"] } },
+          // Test-only values; real ones are set with `convex env set`.
+          env: {
+            SITE_URL: "http://localhost:3000",
+            BETTER_AUTH_SECRET: "test-only-secret-that-is-long-enough-1234567890",
+          },
+          // The components register their modules with import.meta.glob, which Vite
+          // only transforms in inlined dependencies.
+          server: {
+            deps: { inline: ["convex-test", "@convex-dev/better-auth", "@convex-dev/rate-limiter"] },
+          },
         },
       },
     ],
