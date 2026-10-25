@@ -243,6 +243,20 @@ describe("users.update", () => {
     expect(await profileOf(t, target.userId)).toMatchObject({ name: "Grace M.", roleId });
   });
 
+  // A form opened before someone else changed the role mustn't put it back.
+  it("keeps the role when only the name is sent", async () => {
+    const t = setupConvex();
+    const { as } = await superAdmin(t);
+    const target = await createUser(t);
+
+    await as.mutation(api.users.update, { id: target.userId, name: "Grace M." });
+
+    expect(await profileOf(t, target.userId)).toMatchObject({
+      name: "Grace M.",
+      roleId: target.roleId,
+    });
+  });
+
   it("refuses an empty name", async () => {
     const t = setupConvex();
     const { as } = await superAdmin(t);
@@ -369,13 +383,15 @@ describe("users.setStatus", () => {
     expect((await signIn(t, target.email, target.password)).status).toBe(200);
   });
 
-  it("refuses to disable the last active Super Admin", async () => {
+  // Only a Super Admin can disable a Super Admin, so this also keeps one active.
+  it("refuses to change the caller's own status", async () => {
     const t = setupConvex();
-    const { as, userId } = await superAdmin(t);
+    const { as, userId, systemRoleId } = await superAdmin(t);
+    await superAdmin(t, systemRoleId);
 
     await expectErrorCode(
       as.mutation(api.users.setStatus, { id: userId, status: "disabled" }),
-      "LAST_SUPER_ADMIN",
+      "FORBIDDEN",
     );
   });
 

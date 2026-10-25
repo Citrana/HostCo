@@ -55,7 +55,11 @@ async function getManageableUser(ctx: QueryCtx, callerRole: Doc<"roles">, id: Id
   return { user, role };
 }
 
-/** Throws unless someone other than `user` remains an active Super Admin. */
+/**
+ * Throws unless someone other than `user` remains an active Super Admin. Only
+ * matters when Super Admins demote themselves: anyone else who demotes one is
+ * a Super Admin too.
+ */
 async function assertAnotherActiveSuperAdmin(
   ctx: QueryCtx,
   user: Doc<"users">,
@@ -132,16 +136,19 @@ export const create = mutation({
 });
 
 export const update = mutation({
-  args: { id: v.id("users"), name: v.string(), roleId: v.id("roles") },
+  // `roleId` is left out when the role isn't being changed, so a form opened
+  // before someone else changed it can't put the old one back.
+  args: { id: v.id("users"), name: v.string(), roleId: v.optional(v.id("roles")) },
   handler: async (ctx, args) => {
     const { role: callerRole } = await requirePermission(ctx, "user.manage");
     const { user, role } = await getManageableUser(ctx, callerRole, args.id);
     const name = cleanPersonName(args.name);
-    if (args.roleId !== user.roleId) {
-      const newRole = await getAssignableRole(ctx, callerRole, args.roleId);
+    const roleId = args.roleId ?? user.roleId;
+    if (roleId !== user.roleId) {
+      const newRole = await getAssignableRole(ctx, callerRole, roleId);
       if (!newRole.isSystem) await assertAnotherActiveSuperAdmin(ctx, user, role);
     }
-    await ctx.db.patch("users", user._id, { name, roleId: args.roleId });
+    await ctx.db.patch("users", user._id, { name, roleId });
     return null;
   },
 });
@@ -150,13 +157,13 @@ export const update = mutation({
 export const setStatus = mutation({
   args: { id: v.id("users"), status: v.union(v.literal("active"), v.literal("disabled")) },
   handler: async (ctx, args) => {
-    const { role: callerRole } = await requirePermission(ctx, "user.manage");
-    const { user, role } = await getManageableUser(ctx, callerRole, args.id);
+    const { user: caller, role: callerRole } = await requirePermission(ctx, "user.manage");
+    // Nobody locks themselves out. Since only a Super Admin can disable a Super
+    // Admin, this also means an active Super Admin always remains.
+    if (args.id === caller._id) throw appError("FORBIDDEN");
+    const { user } = await getManageableUser(ctx, callerRole, args.id);
     if (user.status === args.status) return null;
-    if (args.status === "disabled") {
-      await assertAnotherActiveSuperAdmin(ctx, user, role);
-      await revokeAllSessions(ctx, user.authUserId);
-    }
+    if (args.status === "disabled") await revokeAllSessions(ctx, user.authUserId);
     await ctx.db.patch("users", user._id, { status: args.status });
     return null;
   },
